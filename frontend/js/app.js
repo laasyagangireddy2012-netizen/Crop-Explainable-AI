@@ -1,3 +1,4 @@
+const API_URL = "https://crop-explainable-ai.onrender.com";
 let currentLanguage = 'en';
 let isLoggedIn = false;
 let currentUser = null;
@@ -473,6 +474,7 @@ document.getElementById('npkInfoBtn').addEventListener('click', () => {
 });
 
 // Crop Recommendation with Explainable AI
+// Crop Recommendation interacting with your Render Express API
 recommendBtn.addEventListener('click', () => {
     const inputs = {
         climate: document.getElementById('climate').value,
@@ -492,23 +494,36 @@ recommendBtn.addEventListener('click', () => {
         return;
     }
 
-    // Use Explainable AI to analyze all crops
-    const results = explainableAI.analyzeAllCrops(inputs, cropDatabase);
-    const bestMatch = results[0];
-    
-    if (bestMatch) {
-        const explanation = explainableAI.generateExplanation(
-            inputs, 
-            bestMatch.crop, 
-            bestMatch.scores, 
-            bestMatch.confidence, 
-            currentLanguage
-        );
-        
-        displayRecommendation(bestMatch.crop, inputs, explanation);
-        resultsSection.style.display = 'block';
-        resultsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Show a loading text while Render processes the request
+    document.getElementById('recommendationResults').innerHTML = `<p style="text-align:center; padding: 20px;">🤖 ${translations[currentLanguage].processing || 'Processing...'}</p>`;
+    resultsSection.style.display = 'block';
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+    // Send data directly to your Render live backend endpoint
+    fetch(`${API_URL}/api/recommendations`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inputs)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        // Find the matched crop inside your frontend cropDatabase to keep displayRecommendation happy
+        if (data && data.bestMatch) {
+            const matchedCrop = cropDatabase.find(c => c.id === data.bestMatch.crop.id) || data.bestMatch.crop;
+            displayRecommendation(matchedCrop, inputs, data.explanation);
+        } else {
+            alert('No suitable crop matching patterns found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error getting crop recommendation:', error);
+        alert('Could not connect to the AI Server. Please try again.');
+    });
 });
 
 
