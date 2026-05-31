@@ -2,24 +2,34 @@ const translations = {
     en: {
         tagline: "AI-Powered Crop Recommendations",
         login: "Login",
-        loginTitle: "Farmer Login",
+        loginTitle: "Welcome Back",
+        loginSubtitle: "Sign in to your account to continue",
+        resetHint: "Enter your username and set a new password.",
+        footerText: "© 2026 CROPXAI · Empowering Farmers with AI",
         username: "Username",
         password: "Password",
         loginBtn: "Login",
-        demoNote: "Demo: username: farmer / password: demo123",
-        welcome: "Welcome to Your Dashboard",
-        logout: "Logout",
+        welcome: "Dashboard",
+        logout: "⏻ Logout",
         profile: "Profile",
-        inputTitle: "Enter Your Farm Details",
-        location: "Location:",
-        area: "Area (in acres):",
-        season: "Season:",
-        soilType: "Soil Type:",
-        soilPh: "Soil pH Value:",
-        nitrogen: "Nitrogen (N) %:",
-        phosphorus: "Phosphorus (P) %:",
-        potassium: "Potassium (K) %:",
+        inputTitle: "Farm Details",
+        location: "📍 Location",
+        area: "📐 Area (acres)",
+        season: "🗓️ Season",
+        soilType: "🪨 Soil Type",
+        soilPh: "⚗️ Soil pH",
+        nitrogen: "🌿 Nitrogen (N) %",
+        phosphorus: "🔴 Phosphorus (P) %",
+        potassium: "🟡 Potassium (K) %",
+        autoDetect: "Auto",
+        detectLocation: "📍",
+        autoDetectClimate: "Auto",
+        climate: "Climate Type",
+        liveWeather: "Live Weather",
+        detectedClimate: "Detected Climate:",
+        fetchingWeather: "Fetching live weather...",
         getRecommendation: "Get Crop Recommendation",
+        backToFarm: "Back to Farm Details",
         recommendationTitle: "Recommended Crop",
         phInfoTitle: "Soil pH Information",
         phInfoContent: "Soil pH measures acidity/alkalinity on a scale of 0-14. Most crops prefer pH 6.0-7.5.",
@@ -43,7 +53,24 @@ const translations = {
         voiceAssistant: "Voice Assistant",
         voiceReady: "Ready to listen...",
         startListening: "Start Listening",
-        autoDetect: "Auto Detect",
+        diseaseDetection: "Disease Detection",
+        diseaseDetectionTitle: "Plant Disease Detection",
+        diseaseSubtitle: "Upload a photo of a plant leaf to identify diseases",
+        uploadLeafPhoto: "Upload or drag a leaf photo here",
+        uploadHint: "Supports JPG, PNG, WEBP • Max 10MB",
+        choosePhoto: "📷 Choose Photo",
+        takePhoto: "📸 Take Photo",
+        selectCropType: "Select Crop Type:",
+        analyzeDisease: "🔍 Analyze for Disease",
+        analyzingImage: "Analyzing leaf image...",
+        analyzeAnother: "🔄 Analyze Another",
+        cameraHint: "Point camera at the diseased leaf and tap Capture",
+        detectLocation: "📍 Detect",
+        autoDetectClimate: "🌤️ Auto Detect",
+        liveWeather: "Live Weather",
+        detectedClimate: "Detected Climate:",
+        fetchingWeather: "Fetching live weather data...",
+        climate: "Climate Type:",
         aiExplanation: "AI Explanation",
         featureImportance: "Feature Importance",
         confidenceScore: "Confidence Score",
@@ -187,29 +214,39 @@ const translations = {
     te: {
         tagline: "AI ఆధారిత పంట సిఫార్సులు",
         login: "లాగిన్",
-        loginTitle: "రైతు లాగిన్",
+        loginTitle: "స్వాగతం",
+        loginSubtitle: "మీ ఖాతాలోకి సైన్ ఇన్ చేయండి",
+        resetHint: "మీ వినియోగదారు పేరు నమోదు చేసి కొత్త పాస్‌వర్డ్ సెట్ చేయండి.",
+        footerText: "© 2026 CROPXAI · రైతులను AI తో శక్తివంతం చేయడం",
         username: "వినియోగదారు పేరు",
         password: "పాస్‌వర్డ్",
         loginBtn: "లాగిన్",
-        demoNote: "డెమో: వినియోగదారు పేరు: farmer / పాస్‌వర్డ్: demo123",
-        welcome: "మీ డాష్‌బోర్డ్‌కు స్వాగతం",
-        logout: "లాగ్అవుట్",
+        welcome: "డాష్‌బోర్డ్",
+        logout: "⏻ లాగ్అవుట్",
         profile: "ప్రొఫైల్",
-        inputTitle: "మీ వ్యవసాయ వివరాలను నమోదు చేయండి",
-        location: "స్థానం:",
-        area: "విస్తీర్ణం (ఎకరాలలో):",
-        season: "సీజన్:",
-        soilType: "నేల రకం:",
-        soilPh: "నేల pH విలువ:",
-        nitrogen: "నత్రజని (N) %:",
-        phosphorus: "భాస్వరం (P) %:",
-        potassium: "పొటాషియం (K) %:",
+        inputTitle: "వ్యవసాయ వివరాలు",
+        location: "📍 స్థానం",
+        area: "📐 విస్తీర్ణం (ఎకరాలు)",
+        season: "🗓️ సీజన్",
+        soilType: "🪨 నేల రకం",
+        soilPh: "⚗️ నేల pH",
+        nitrogen: "🌿 నత్రజని (N) %",
+        phosphorus: "🔴 భాస్వరం (P) %",
+        potassium: "🟡 పొటాషియం (K) %",
+        autoDetect: "ఆటో",
+        detectLocation: "📍",
+        autoDetectClimate: "ఆటో",
+        climate: "వాతావరణ రకం",
+        liveWeather: "లైవ్ వాతావరణం",
+        detectedClimate: "గుర్తించిన వాతావరణం:",
+        fetchingWeather: "వాతావరణ డేటా తీసుకుంటోంది...",
         getRecommendation: "పంట సిఫార్సు పొందండి",
+        backToFarm: "వ్యవసాయ వివరాలకు తిరిగి వెళ్ళండి",
         recommendationTitle: "సిఫార్సు చేయబడిన పంట",
         phInfoTitle: "నేల pH సమాచారం",
-        phInfoContent: "నేల pH 0-14 స్కేల్‌లో ఆమ్లత్వం/క్షారత్వాన్ని కొలుస్తుంది. చాలా పంటలు pH 6.0-7.5ని ఇష్టపడతాయి.",
+        phInfoContent: "నేల pH 0-14 స్కేల్‌లో ఆమ్లత్వం/క్షారత్వాన్ని కొలుస్తుంది.",
         npkInfoTitle: "NPK పోషకాల సమాచారం",
-        npkInfoContent: "N (నత్రజని): ఆకు పెరుగుదలను ప్రోత్సహిస్తుంది. P (భాస్వరం): వేరు మరియు పువ్వుల అభివృద్ధికి మద్దతు ఇస్తుంది. K (పొటాషియం): మొత్తం మొక్క ఆరోగ్యాన్ని మెరుగుపరుస్తుంది.",
+        npkInfoContent: "N: ఆకు పెరుగుదల. P: వేరు అభివృద్ధి. K: మొక్క ఆరోగ్యం.",
         irrigation: "సిఫార్సు చేయబడిన నీటిపారుదల:",
         fertilizers: "సిఫార్సు చేయబడిన ఎరువులు:",
         explanation: "ఈ పంట ఎందుకు?",
@@ -228,7 +265,24 @@ const translations = {
         voiceAssistant: "వాయిస్ అసిస్టెంట్",
         voiceReady: "వినడానికి సిద్ధంగా ఉంది...",
         startListening: "వినడం ప్రారంభించండి",
-        autoDetect: "ఆటో డిటెక్ట్",
+        diseaseDetection: "వ్యాధి గుర్తింపు",
+        diseaseDetectionTitle: "మొక్కల వ్యాధి గుర్తింపు",
+        diseaseSubtitle: "వ్యాధులను గుర్తించడానికి మొక్క ఆకు ఫోటో అప్‌లోడ్ చేయండి",
+        uploadLeafPhoto: "ఇక్కడ ఆకు ఫోటో అప్‌లోడ్ చేయండి లేదా లాగండి",
+        uploadHint: "JPG, PNG, WEBP మద్దతు • గరిష్టం 10MB",
+        choosePhoto: "📷 ఫోటో ఎంచుకోండి",
+        takePhoto: "📸 ఫోటో తీయండి",
+        selectCropType: "పంట రకం ఎంచుకోండి:",
+        analyzeDisease: "🔍 వ్యాధి కోసం విశ్లేషించండి",
+        analyzingImage: "ఆకు చిత్రాన్ని విశ్లేషిస్తోంది...",
+        analyzeAnother: "🔄 మరొకటి విశ్లేషించండి",
+        cameraHint: "కెమెరాను వ్యాధి సోకిన ఆకు వైపు చూపించి క్యాప్చర్ నొక్కండి",
+        detectLocation: "📍 గుర్తించు",
+        autoDetectClimate: "🌤️ ఆటో డిటెక్ట్",
+        liveWeather: "లైవ్ వాతావరణం",
+        detectedClimate: "గుర్తించిన వాతావరణం:",
+        fetchingWeather: "లైవ్ వాతావరణ డేటా తీసుకుంటోంది...",
+        climate: "వాతావరణ రకం:",
         aiExplanation: "AI వివరణ",
         featureImportance: "ఫీచర్ ప్రాముఖ్యత",
         confidenceScore: "విశ్వాస స్కోర్",
@@ -372,29 +426,39 @@ const translations = {
     hi: {
         tagline: "AI-संचालित फसल सिफारिशें",
         login: "लॉगिन",
-        loginTitle: "किसान लॉगिन",
+        loginTitle: "स्वागत है",
+        loginSubtitle: "अपने खाते में साइन इन करें",
+        resetHint: "अपना उपयोगकर्ता नाम दर्ज करें और नया पासवर्ड सेट करें।",
+        footerText: "© 2026 CROPXAI · किसानों को AI से सशक्त बनाना",
         username: "उपयोगकर्ता नाम",
         password: "पासवर्ड",
         loginBtn: "लॉगिन",
-        demoNote: "डेमो: उपयोगकर्ता नाम: farmer / पासवर्ड: demo123",
-        welcome: "आपके डैशबोर्ड में आपका स्वागत है",
-        logout: "लॉगआउट",
+        welcome: "डैशबोर्ड",
+        logout: "⏻ लॉगआउट",
         profile: "प्रोफ़ाइल",
-        inputTitle: "अपने खेत का विवरण दर्ज करें",
-        location: "स्थान:",
-        area: "क्षेत्रफल (एकड़ में):",
-        season: "मौसम:",
-        soilType: "मिट्टी का प्रकार:",
-        soilPh: "मिट्टी pH मान:",
-        nitrogen: "नाइट्रोजन (N) %:",
-        phosphorus: "फास्फोरस (P) %:",
-        potassium: "पोटेशियम (K) %:",
+        inputTitle: "खेत का विवरण",
+        location: "📍 स्थान",
+        area: "📐 क्षेत्रफल (एकड़)",
+        season: "🗓️ मौसम",
+        soilType: "🪨 मिट्टी का प्रकार",
+        soilPh: "⚗️ मिट्टी pH",
+        nitrogen: "🌿 नाइट्रोजन (N) %",
+        phosphorus: "🔴 फास्फोरस (P) %",
+        potassium: "🟡 पोटेशियम (K) %",
+        autoDetect: "ऑटो",
+        detectLocation: "📍",
+        autoDetectClimate: "ऑटो",
+        climate: "जलवायु प्रकार",
+        liveWeather: "लाइव मौसम",
+        detectedClimate: "पहचाना गया जलवायु:",
+        fetchingWeather: "मौसम डेटा प्राप्त हो रहा है...",
         getRecommendation: "फसल सिफारिश प्राप्त करें",
+        backToFarm: "खेत विवरण पर वापस जाएं",
         recommendationTitle: "अनुशंसित फसल",
         phInfoTitle: "मिट्टी pH जानकारी",
-        phInfoContent: "मिट्टी pH 0-14 के पैमाने पर अम्लता/क्षारीयता को मापता है। अधिकांश फसलें pH 6.0-7.5 को पसंद करती हैं।",
+        phInfoContent: "मिट्टी pH 0-14 के पैमाने पर अम्लता/क्षारीयता को मापता है।",
         npkInfoTitle: "NPK पोषक तत्व जानकारी",
-        npkInfoContent: "N (नाइट्रोजन): पत्ती की वृद्धि को बढ़ावा देता है। P (फास्फोरस): जड़ और फूल के विकास का समर्थन करता है। K (पोटेशियम): समग्र पौधे के स्वास्थ्य को बढ़ाता है।",
+        npkInfoContent: "N: पत्ती वृद्धि। P: जड़ विकास। K: पौधे का स्वास्थ्य।",
         irrigation: "अनुशंसित सिंचाई:",
         fertilizers: "अनुशंसित उर्वरक:",
         explanation: "यह फसल क्यों?",
@@ -413,7 +477,24 @@ const translations = {
         voiceAssistant: "वॉयस असिस्टेंट",
         voiceReady: "सुनने के लिए तैयार...",
         startListening: "सुनना शुरू करें",
-        autoDetect: "ऑटो डिटेक्ट",
+        diseaseDetection: "रोग पहचान",
+        diseaseDetectionTitle: "पौधे की बीमारी पहचान",
+        diseaseSubtitle: "बीमारियों की पहचान के लिए पत्ती की फोटो अपलोड करें",
+        uploadLeafPhoto: "यहां पत्ती की फोटो अपलोड करें या खींचें",
+        uploadHint: "JPG, PNG, WEBP समर्थित • अधिकतम 10MB",
+        choosePhoto: "📷 फोटो चुनें",
+        takePhoto: "📸 फोटो लें",
+        selectCropType: "फसल का प्रकार चुनें:",
+        analyzeDisease: "🔍 बीमारी के लिए विश्लेषण करें",
+        analyzingImage: "पत्ती की छवि का विश्लेषण हो रहा है...",
+        analyzeAnother: "🔄 दूसरा विश्लेषण करें",
+        cameraHint: "कैमरे को रोगग्रस्त पत्ती की ओर करें और Capture दबाएं",
+        detectLocation: "📍 पहचानें",
+        autoDetectClimate: "🌤️ ऑटो डिटेक्ट",
+        liveWeather: "लाइव मौसम",
+        detectedClimate: "पहचाना गया जलवायु:",
+        fetchingWeather: "लाइव मौसम डेटा प्राप्त हो रहा है...",
+        climate: "जलवायु प्रकार:",
         aiExplanation: "AI स्पष्टीकरण",
         featureImportance: "फीचर महत्व",
         confidenceScore: "विश्वास स्कोर",
@@ -650,20 +731,95 @@ function updateDropdownOptions(lang) {
 }
 
 function translatePage(lang) {
-    document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-            element.textContent = translations[lang][key];
-        }
+    const t = translations[lang];
+    if (!t) return;
+
+    // 1. All data-translate elements
+    document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        if (t[key]) el.textContent = t[key];
     });
 
-    document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
-        const key = element.getAttribute('data-translate-placeholder');
-        if (translations[lang] && translations[lang][key]) {
-            element.placeholder = translations[lang][key];
-        }
+    // 2. Placeholders
+    document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-translate-placeholder');
+        if (t[key]) el.placeholder = t[key];
     });
-    
-    // Update dropdown options
+
+    // 3. Auto buttons
+    document.querySelectorAll('.auto-btn').forEach(btn => {
+        const key = btn.getAttribute('data-translate') || 'autoDetect';
+        if (t[key]) btn.textContent = t[key];
+    });
+
+    // 4. Sidebar nav link labels
+    const sidebarMap = { navFarm:'inputTitle', navDisease:'diseaseDetection', navVoice:'voiceAssistant', navProfile:'profile' };
+    Object.entries(sidebarMap).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el && t[key]) { const sp = el.querySelector('span:last-child'); if (sp) sp.textContent = t[key]; }
+    });
+
+    // 5. Page title in topbar
+    const pt = document.querySelector('.page-title');
+    if (pt && t.inputTitle) pt.textContent = t.inputTitle;
+
+    // 6. Recommend button text
+    const rb = document.getElementById('recommendBtn');
+    if (rb && t.getRecommendation) {
+        const sp = rb.querySelector('span:last-child');
+        if (sp) sp.textContent = t.getRecommendation;
+    }
+
+    // 7. Logout button
+    const lb = document.getElementById('logoutBtn');
+    if (lb && t.logout) lb.textContent = t.logout;
+
+    // 8. Sidebar role text
+    const sr = document.querySelector('.sidebar-role');
+    if (sr && t.welcome) sr.textContent = t.welcome;
+
+    // 9. Disease modal title
+    const dm = document.querySelector('.disease-modal h2');
+    if (dm && t.diseaseDetectionTitle) dm.textContent = t.diseaseDetectionTitle;
+
+    // 10. Voice modal title
+    const vm = document.querySelector('.voice-modal h2');
+    if (vm && t.voiceAssistant) vm.textContent = t.voiceAssistant;
+
+    // 11. Profile modal title + re-render content if open
+    const pm = document.querySelector('#profileModal h2');
+    if (pm && t.profileTitle) pm.textContent = t.profileTitle;
+    if (profileModal && profileModal.style.display === 'block' && typeof showProfile === 'function') {
+        showProfile();
+    }
+
+    // 12. Brand tagline
+    const bt = document.querySelector('.brand-tag');
+    if (bt && t.tagline) bt.textContent = t.tagline;
+
+    // 13. Weather widget live label
+    const wh = document.querySelector('.weather-widget-header span:first-child');
+    if (wh && t.liveWeather) wh.innerHTML = ' ' + t.liveWeather;
+
+    // 14. Detected climate label
+    const cl = document.querySelector('.weather-climate-tag span:first-child');
+    if (cl && t.detectedClimate) cl.textContent = t.detectedClimate;
+
+    // 15. Update dropdown options
     updateDropdownOptions(lang);
+
+    // 16. Login page — update authTitle based on which form is visible
+    const authTitle = document.getElementById('authTitle');
+    if (authTitle) {
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const forgotForm = document.getElementById('forgotPasswordForm');
+        if (loginForm && loginForm.style.display !== 'none') {
+            authTitle.textContent = t.loginTitle || 'Welcome Back';
+        } else if (registerForm && registerForm.style.display !== 'none') {
+            authTitle.textContent = t.createAccount || 'Create Account';
+        } else if (forgotForm && forgotForm.style.display !== 'none') {
+            authTitle.textContent = t.forgotPassword || 'Reset Password';
+        }
+    }
 }

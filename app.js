@@ -2,22 +2,23 @@ let currentLanguage = 'en';
 let isLoggedIn = false;
 let currentUser = null;
 let users = JSON.parse(localStorage.getItem('cropxai_users')) || {
-    'farmer': { password: 'demo123', name: 'Demo Farmer', email: 'farmer@demo.com' }
+    'farmer': { password: 'demo123', name: 'Demo Farmer' }
 };
 
 // DOM Elements
-const loginModal = document.getElementById('loginModal');
-const infoModal = document.getElementById('infoModal');
+const loginPage    = document.getElementById('loginPage');
+const topNav       = document.getElementById('topNav');
+const loginModal   = document.getElementById('loginModal'); // kept for compat
+const infoModal    = document.getElementById('infoModal');
 const profileModal = document.getElementById('profileModal');
-const voiceModal = document.getElementById('voiceModal');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const profileBtn = document.getElementById('profileBtn');
-const voiceBtn = document.getElementById('voiceBtn');
-const loginForm = document.getElementById('loginForm');
+const voiceModal   = document.getElementById('voiceModal');
+const logoutBtn    = document.getElementById('logoutBtn');
+const profileBtn   = document.getElementById('profileBtn');
+const voiceBtn     = document.getElementById('voiceBtn');
+const loginForm    = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-const mainContent = document.getElementById('mainContent');
+const mainContent  = document.getElementById('mainContent');
 const languageSelector = document.getElementById('languageSelector');
 const recommendBtn = document.getElementById('recommendBtn');
 const resultsSection = document.getElementById('resultsSection');
@@ -25,22 +26,21 @@ const resultsSection = document.getElementById('resultsSection');
 // Auth Links
 const createAccountLink = document.getElementById('createAccountLink');
 const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-const backToLoginLink = document.getElementById('backToLoginLink');
-const backToLoginLink2 = document.getElementById('backToLoginLink2');
+const backToLoginLink    = document.getElementById('backToLoginLink');
+const backToLoginLink2   = document.getElementById('backToLoginLink2');
 
 // Auto-detect buttons
 const autoPhBtn = document.getElementById('autoPhBtn');
-const autoNBtn = document.getElementById('autoNBtn');
-const autoPBtn = document.getElementById('autoPBtn');
-const autoKBtn = document.getElementById('autoKBtn');
+const autoNBtn  = document.getElementById('autoNBtn');
+const autoPBtn  = document.getElementById('autoPBtn');
+const autoKBtn  = document.getElementById('autoKBtn');
 
 // Voice Assistant
-const startVoiceBtn = document.getElementById('startVoiceBtn');
-const voiceStatus = document.getElementById('voiceStatus');
+const startVoiceBtn  = document.getElementById('startVoiceBtn');
+const voiceStatus    = document.getElementById('voiceStatus');
 const voiceTranscript = document.getElementById('voiceTranscript');
 let recognition = null;
 
-// Initialize Speech Recognition
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
@@ -48,92 +48,88 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     recognition.interimResults = false;
 }
 
-// Modal Controls
-loginBtn.addEventListener('click', () => {
-    loginModal.style.display = 'block';
-    showLoginForm();
-});
+// ── Show/hide login page vs app ───────────────────────────────────────────
+function showLoginPage() {
+    loginPage.style.display  = 'flex';
+    topNav.style.display     = 'none';
+    document.querySelector('.app-shell').style.display = 'none';
+}
+function showApp() {
+    loginPage.style.display  = 'none';
+    topNav.style.display     = 'flex';
+    document.querySelector('.app-shell').style.display = 'block';
+    mainContent.style.display = 'flex';
+}
 
-profileBtn.addEventListener('click', () => {
-    showProfile();
-});
+// Start on login page
+showLoginPage();
 
-voiceBtn.addEventListener('click', () => {
-    voiceModal.style.display = 'block';
-});
+// Sync language selector in nav with login page selector
+const languageSelectorNav = document.getElementById('languageSelectorNav');
+if (languageSelectorNav) {
+    languageSelectorNav.addEventListener('change', (e) => {
+        currentLanguage = e.target.value;
+        languageSelector.value = currentLanguage;
+        translatePage(currentLanguage);
+    });
+}
 
+// Modal close buttons
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', function() {
         this.parentElement.parentElement.style.display = 'none';
-        // Restore body scroll when any modal closes
         document.body.style.overflow = 'auto';
     });
 });
 
 window.addEventListener('click', (e) => {
-    if (e.target === loginModal) {
-        loginModal.style.display = 'none';
+    if (e.target === infoModal)    { infoModal.style.display    = 'none'; document.body.style.overflow = 'auto'; }
+    if (e.target === profileModal) { profileModal.style.display = 'none'; document.body.style.overflow = 'auto'; }
+    if (e.target === voiceModal)   { voiceModal.style.display   = 'none'; document.body.style.overflow = 'auto'; }
+    if (e.target === diseaseModal) {
+        diseaseModal.style.display = 'none';
         document.body.style.overflow = 'auto';
-    }
-    if (e.target === infoModal) {
-        infoModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-    if (e.target === profileModal) {
-        profileModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-    if (e.target === voiceModal) {
-        voiceModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-    if (e.target === insuranceModal) {
-        insuranceModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+        if (typeof stopCamera === 'function') stopCamera();
     }
 });
 
-// Auth Form Switching
-createAccountLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    showRegisterForm();
-});
+if (profileBtn) profileBtn.addEventListener('click', () => showProfile());
+if (voiceBtn)   voiceBtn.addEventListener('click',   () => { voiceModal.style.display = 'block'; });
 
-forgotPasswordLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    showForgotPasswordForm();
-});
+// Sidebar nav links
+const navDisease = document.getElementById('navDisease');
+const navVoice   = document.getElementById('navVoice');
+const navProfile = document.getElementById('navProfile');
+if (navDisease) navDisease.addEventListener('click', () => { diseaseModal.style.display = 'block'; document.body.style.overflow = 'hidden'; resetDiseaseModal(); });
+if (navVoice)   navVoice.addEventListener('click',   () => { voiceModal.style.display = 'block'; });
+if (navProfile) navProfile.addEventListener('click', () => showProfile());
 
-backToLoginLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    showLoginForm();
-});
-
-backToLoginLink2.addEventListener('click', (e) => {
-    e.preventDefault();
-    showLoginForm();
-});
-
+// Auth form switching
+createAccountLink.addEventListener('click',  (e) => { e.preventDefault(); showRegisterForm(); });
+forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordForm(); });
+backToLoginLink.addEventListener('click',    (e) => { e.preventDefault(); showLoginForm(); });
+backToLoginLink2.addEventListener('click',   (e) => { e.preventDefault(); showLoginForm(); });
 
 function showLoginForm() {
-    loginForm.style.display = 'flex';
-    registerForm.style.display = 'none';
+    loginForm.style.display        = 'flex';
+    registerForm.style.display     = 'none';
     forgotPasswordForm.style.display = 'none';
-    document.getElementById('authTitle').textContent = translations[currentLanguage].loginTitle;
+    document.getElementById('authTitle').textContent = translations[currentLanguage]?.loginTitle || 'Welcome Back';
+    document.querySelector('.lp-card-sub').textContent = 'Sign in to your account to continue';
 }
-
 function showRegisterForm() {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'flex';
+    loginForm.style.display        = 'none';
+    registerForm.style.display     = 'flex';
     forgotPasswordForm.style.display = 'none';
-    document.getElementById('authTitle').textContent = translations[currentLanguage].createAccount;
+    document.getElementById('authTitle').textContent = translations[currentLanguage]?.createAccount || 'Create Account';
+    document.querySelector('.lp-card-sub').textContent = 'Fill in the details below to get started';
 }
-
 function showForgotPasswordForm() {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'none';
+    loginForm.style.display        = 'none';
+    registerForm.style.display     = 'none';
     forgotPasswordForm.style.display = 'flex';
-    document.getElementById('authTitle').textContent = translations[currentLanguage].forgotPassword;
+    document.getElementById('authTitle').textContent = translations[currentLanguage]?.forgotPassword || 'Reset Password';
+    document.querySelector('.lp-card-sub').textContent = 'Enter your username to reset your password';
 }
 
 // Login Handler
@@ -141,42 +137,31 @@ loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    
     if (users[username] && users[username].password === password) {
         currentUser = { username, ...users[username] };
-        isLoggedIn = true;
-        loginModal.style.display = 'none';
-        loginBtn.style.display = 'none';
-        mainContent.style.display = 'block';
-        document.getElementById('profileName').textContent = currentUser.name;
+        isLoggedIn  = true;
+        showApp();
+        document.getElementById('profileName').textContent = currentUser.name || username;
+        document.getElementById('sidebar-username-text') && (document.getElementById('sidebar-username-text').textContent = currentUser.name || username);
         loginForm.reset();
     } else {
-        alert(translations[currentLanguage].loginBtn + ' failed!');
+        alert('Invalid username or password!');
     }
 });
 
 // Register Handler
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('newUsername').value;
-    const email = document.getElementById('newEmail').value;
-    const password = document.getElementById('newPassword').value;
+    const username        = document.getElementById('newUsername').value.trim();
+    const password        = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-    const name = document.getElementById('farmerName').value;
-    
-    if (users[username]) {
-        alert('Username already exists!');
-        return;
-    }
-    
-    if (password !== confirmPassword) {
-        alert('Passwords do not match!');
-        return;
-    }
-    
-    users[username] = { password, name, email };
+    if (!username || !password || !confirmPassword) { alert('All fields are required.'); return; }
+    if (users[username]) { alert('Username already exists!'); return; }
+    if (password !== confirmPassword) { alert('Passwords do not match!'); return; }
+    if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
+    users[username] = { password, name: username };
     localStorage.setItem('cropxai_users', JSON.stringify(users));
-    alert('Account created successfully! Please login.');
+    alert('Account created! Please login.');
     showLoginForm();
     registerForm.reset();
 });
@@ -184,62 +169,65 @@ registerForm.addEventListener('submit', (e) => {
 // Forgot Password Handler
 forgotPasswordForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('resetUsername').value;
-    const email = document.getElementById('resetEmail').value;
-    const newPassword = document.getElementById('resetNewPassword').value;
-    
-    if (users[username] && users[username].email === email) {
-        users[username].password = newPassword;
-        localStorage.setItem('cropxai_users', JSON.stringify(users));
-        alert('Password reset successfully! Please login.');
-        showLoginForm();
-        forgotPasswordForm.reset();
-    } else {
-        alert('Invalid username or email!');
-    }
+    const username           = document.getElementById('resetUsername').value.trim();
+    const newPassword        = document.getElementById('resetNewPassword').value;
+    const confirmNewPassword = document.getElementById('resetConfirmPassword').value;
+    if (!username || !newPassword || !confirmNewPassword) { alert('All fields are required.'); return; }
+    if (!users[username]) { alert('Username not found.'); return; }
+    if (newPassword !== confirmNewPassword) { alert('Passwords do not match!'); return; }
+    if (newPassword.length < 6) { alert('Password must be at least 6 characters.'); return; }
+    users[username].password = newPassword;
+    localStorage.setItem('cropxai_users', JSON.stringify(users));
+    alert('Password reset! Please login.');
+    showLoginForm();
+    forgotPasswordForm.reset();
 });
 
 // Logout Handler
 logoutBtn.addEventListener('click', () => {
-    isLoggedIn = false;
+    isLoggedIn  = false;
     currentUser = null;
-    mainContent.style.display = 'none';
-    loginBtn.style.display = 'block';
-    resultsSection.style.display = 'none';
+    if (resultsSection) resultsSection.style.display = 'none';
+    const placeholder = document.getElementById('resultsPlaceholder');
+    if (placeholder) placeholder.style.display = 'block';
     loginForm.reset();
+    showLoginForm();
+    showLoginPage();
 });
 
-// Language Selector
+// Language Selector (login page)
 languageSelector.addEventListener('change', (e) => {
     currentLanguage = e.target.value;
+    if (languageSelectorNav) languageSelectorNav.value = currentLanguage;
     translatePage(currentLanguage);
-    if (recognition) {
-        recognition.lang = currentLanguage === 'en' ? 'en-US' : 
-                         currentLanguage === 'te' ? 'te-IN' : 'hi-IN';
-    }
+    if (recognition) recognition.lang = currentLanguage === 'en' ? 'en-US' : currentLanguage === 'te' ? 'te-IN' : 'hi-IN';
 });
-
 
 // Profile Display
 function showProfile() {
     if (!currentUser) return;
-    
-    const content = `
+    const lang = currentLanguage;
+    const labels = {
+        en: { title: 'User Profile', name: 'Name', username: 'Username' },
+        te: { title: 'వినియోగదారు ప్రొఫైల్', name: 'పేరు', username: 'వినియోగదారు పేరు' },
+        hi: { title: 'उपयोगकर्ता प्रोफ़ाइल', name: 'नाम', username: 'उपयोगकर्ता नाम' }
+    };
+    const L = labels[lang] || labels.en;
+
+    // Update modal title
+    const titleEl = document.querySelector('#profileModal h2');
+    if (titleEl) titleEl.textContent = L.title;
+
+    document.getElementById('profileContent').innerHTML = `
         <div class="profile-item">
-            <strong>${translations[currentLanguage].fullName}:</strong>
-            ${currentUser.name}
+            <strong>${L.name}</strong>
+            <span>${currentUser.name || currentUser.username}</span>
         </div>
         <div class="profile-item">
-            <strong>${translations[currentLanguage].username}:</strong>
-            ${currentUser.username}
-        </div>
-        <div class="profile-item">
-            <strong>${translations[currentLanguage].email}:</strong>
-            ${currentUser.email}
+            <strong>${L.username}</strong>
+            <span>${currentUser.username}</span>
         </div>
     `;
-    
-    document.getElementById('profileContent').innerHTML = content;
     profileModal.style.display = 'block';
 }
 
@@ -272,83 +260,69 @@ if (recognition) {
     });
 }
 
+// ── Voice Assistant: Natural Language Intent Engine ──────────────────────
 function processVoiceCommand(text) {
-    text = text.toLowerCase();
-    
-    const messages = {
-        en: {
-            processing: 'Processing your request...',
-            recommend: 'Getting crop recommendation...',
-            profile: 'Opening your profile...',
-            climate: 'Please select climate from the form',
-            soil: 'Please select soil type from the form',
-            help: 'You can say: recommend crop, show profile, fill climate, fill soil type, auto detect values',
-            autoFill: 'Auto-filling soil parameters...',
-            notUnderstood: 'Sorry, I did not understand. Try saying: recommend crop, show profile, or help'
-        },
-        te: {
-            processing: 'మీ అభ్యర్థనను ప్రాసెస్ చేస్తోంది...',
-            recommend: 'పంట సిఫార్సును పొందుతోంది...',
-            profile: 'మీ ప్రొఫైల్‌ను తెరుస్తోంది...',
-            climate: 'దయచేసి ఫారమ్ నుండి వాతావరణాన్ని ఎంచుకోండి',
-            soil: 'దయచేసి ఫారమ్ నుండి నేల రకాన్ని ఎంచుకోండి',
-            help: 'మీరు చెప్పవచ్చు: పంట సిఫార్సు చేయండి, ప్రొఫైల్ చూపించండి, వాతావరణం నింపండి, నేల రకం నింపండి, విలువలను ఆటో డిటెక్ట్ చేయండి',
-            autoFill: 'నేల పారామితులను ఆటో-ఫిల్ చేస్తోంది...',
-            notUnderstood: 'క్షమించండి, నాకు అర్థం కాలేదు. ప్రయత్నించండి: పంట సిఫార్సు చేయండి, ప్రొఫైల్ చూపించండి, లేదా సహాయం'
-        },
-        hi: {
-            processing: 'आपके अनुरोध को प्रोसेस कर रहा है...',
-            recommend: 'फसल सिफारिश प्राप्त कर रहा है...',
-            profile: 'आपकी प्रोफ़ाइल खोल रहा है...',
-            climate: 'कृपया फॉर्म से जलवायु चुनें',
-            soil: 'कृपया फॉर्म से मिट्टी का प्रकार चुनें',
-            help: 'आप कह सकते हैं: फसल की सिफारिश करें, प्रोफ़ाइल दिखाएं, जलवायु भरें, मिट्टी का प्रकार भरें, मूल्यों का ऑटो पता लगाएं',
-            autoFill: 'मिट्टी के पैरामीटर ऑटो-भर रहा है...',
-            notUnderstood: 'क्षमा करें, मुझे समझ नहीं आया। कोशिश करें: फसल की सिफारिश करें, प्रोफ़ाइल दिखाएं, या मदद'
+    const t = text.toLowerCase().trim();
+    const lang = currentLanguage;
+
+    // ── Speak response helper ─────────────────────────────────────────────
+    function speak(msg) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utt = new SpeechSynthesisUtterance(msg);
+            utt.lang = lang === 'te' ? 'te-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN';
+            utt.rate = 0.9;
+            window.speechSynthesis.speak(utt);
         }
-    };
-    
-    const msg = messages[currentLanguage];
-    
-    // Recommend crop commands
-    if (text.includes('recommend') || text.includes('suggest') || text.includes('crop') ||
-        text.includes('సిఫార్సు') || text.includes('పంట') ||
-        text.includes('सिफारिश') || text.includes('फसल')) {
-        voiceTranscript.textContent += '\n\n' + msg.recommend;
-        setTimeout(() => {
-            recommendBtn.click();
-            voiceModal.style.display = 'none';
-        }, 1000);
+    }
+
+    // ── Show response in transcript ───────────────────────────────────────
+    function respond(msg) {
+        voiceTranscript.textContent = '🎤 "' + text + '"\n\n💬 ' + msg;
+        speak(msg);
+    }
+
+    // ── Intent: Get crop recommendation ──────────────────────────────────
+    if (/recommend|suggest|which crop|best crop|what crop|crop for|పంట సిఫార్సు|పంట చెప్పు|ఏ పంట|फसल बताओ|कौन सी फसल|सिफारिश/.test(t)) {
+        respond(lang === 'te' ? 'పంట సిఫార్సు పొందుతోంది...' :
+                lang === 'hi' ? 'फसल सिफारिश प्राप्त हो रही है...' :
+                'Getting crop recommendation...');
+        setTimeout(() => { recommendBtn.click(); voiceModal.style.display = 'none'; }, 1200);
         return;
     }
-    
-    // Profile commands
-    if (text.includes('profile') || text.includes('account') || text.includes('user') ||
-        text.includes('ప్రొఫైల్') || text.includes('खाता') || text.includes('प्रोफ़ाइल')) {
-        voiceTranscript.textContent += '\n\n' + msg.profile;
-        setTimeout(() => {
-            showProfile();
-            voiceModal.style.display = 'none';
-        }, 1000);
+
+    // ── Intent: Open disease detection ───────────────────────────────────
+    if (/disease|pest|infection|leaf|plant sick|వ్యాధి|ఆకు|రోగం|बीमारी|रोग|पत्ती/.test(t)) {
+        respond(lang === 'te' ? 'వ్యాధి గుర్తింపు తెరుస్తోంది...' :
+                lang === 'hi' ? 'रोग पहचान खुल रही है...' :
+                'Opening disease detection...');
+        setTimeout(() => { document.getElementById('diseaseDetectionBtn')?.click(); voiceModal.style.display = 'none'; }, 1000);
         return;
     }
-    
-    // Auto-detect commands
-    if (text.includes('auto') || text.includes('detect') || text.includes('fill') ||
-        text.includes('ఆటో') || text.includes('डिटेक्ट') || text.includes('भरें')) {
-        voiceTranscript.textContent += '\n\n' + msg.autoFill;
+
+    // ── Intent: Show profile ──────────────────────────────────────────────
+    if (/profile|my account|my details|ప్రొఫైల్|నా వివరాలు|प्रोफाइल|मेरा खाता/.test(t)) {
+        respond(lang === 'te' ? 'మీ ప్రొఫైల్ తెరుస్తోంది...' :
+                lang === 'hi' ? 'आपकी प्रोफाइल खुल रही है...' :
+                'Opening your profile...');
+        setTimeout(() => { showProfile(); voiceModal.style.display = 'none'; }, 1000);
+        return;
+    }
+
+    // ── Intent: Auto-detect soil parameters ──────────────────────────────
+    if (/auto detect|auto fill|fill soil|detect soil|soil values|నేల విలువలు|ఆటో డిటెక్ట్|मिट्टी भरो|ऑटो डिटेक्ट/.test(t)) {
+        const loc  = document.getElementById('location').value;
+        const soil = document.getElementById('soilType').value;
+        if (!loc || !soil) {
+            const msg = lang === 'te' ? 'దయచేసి ముందు స్థానం మరియు నేల రకం ఎంచుకోండి.' :
+                        lang === 'hi' ? 'कृपया पहले स्थान और मिट्टी का प्रकार चुनें।' :
+                        'Please select location and soil type first.';
+            respond(msg); return;
+        }
+        respond(lang === 'te' ? 'నేల పారామితులు ఆటో-ఫిల్ చేస్తోంది...' :
+                lang === 'hi' ? 'मिट्टी के मान भरे जा रहे हैं...' :
+                'Auto-filling soil parameters...');
         setTimeout(() => {
-            // Check if location and soil type are selected
-            const location = document.getElementById('location').value;
-            const soilType = document.getElementById('soilType').value;
-            
-            if (!location || !soilType) {
-                voiceTranscript.textContent += '\n\n' + (currentLanguage === 'en' ? 'Please select location and soil type first' :
-                    currentLanguage === 'te' ? 'దయచేసి ముందుగా స్థానం మరియు నేల రకాన్ని ఎంచుకోండి' :
-                    'कृपया पहले स्थान और मिट्टी का प्रकार चुनें');
-                return;
-            }
-            
             autoPhBtn.click();
             setTimeout(() => autoNBtn.click(), 200);
             setTimeout(() => autoPBtn.click(), 400);
@@ -357,16 +331,240 @@ function processVoiceCommand(text) {
         }, 1000);
         return;
     }
-    
-    // Help commands
-    if (text.includes('help') || text.includes('what can') || text.includes('commands') ||
-        text.includes('సహాయం') || text.includes('मदद')) {
-        voiceTranscript.textContent += '\n\n' + msg.help;
+
+    // ── Intent: Set location by voice ────────────────────────────────────
+    const stateNames = {
+        'andhra pradesh': 'andhra-pradesh', 'andhra': 'andhra-pradesh',
+        'telangana': 'telangana', 'hyderabad': 'telangana',
+        'karnataka': 'karnataka', 'bengaluru': 'karnataka', 'bangalore': 'karnataka',
+        'tamil nadu': 'tamil-nadu', 'chennai': 'tamil-nadu',
+        'kerala': 'kerala', 'thiruvananthapuram': 'kerala',
+        'maharashtra': 'maharashtra', 'mumbai': 'maharashtra', 'pune': 'maharashtra',
+        'gujarat': 'gujarat', 'ahmedabad': 'gujarat',
+        'rajasthan': 'rajasthan', 'jaipur': 'rajasthan',
+        'punjab': 'punjab', 'chandigarh': 'chandigarh',
+        'haryana': 'haryana',
+        'uttar pradesh': 'uttar-pradesh', 'lucknow': 'uttar-pradesh',
+        'madhya pradesh': 'madhya-pradesh', 'bhopal': 'madhya-pradesh',
+        'west bengal': 'west-bengal', 'kolkata': 'west-bengal',
+        'bihar': 'bihar', 'patna': 'bihar',
+        'odisha': 'odisha', 'bhubaneswar': 'odisha',
+        'assam': 'assam', 'guwahati': 'assam',
+        'delhi': 'delhi', 'new delhi': 'delhi',
+        'himachal': 'himachal-pradesh', 'himachal pradesh': 'himachal-pradesh',
+        'uttarakhand': 'uttarakhand', 'dehradun': 'uttarakhand',
+        'jharkhand': 'jharkhand', 'ranchi': 'jharkhand',
+        'chhattisgarh': 'chhattisgarh', 'raipur': 'chhattisgarh',
+        'goa': 'goa',
+        'manipur': 'manipur', 'meghalaya': 'meghalaya',
+        'nagaland': 'nagaland', 'tripura': 'tripura',
+        'sikkim': 'sikkim', 'mizoram': 'mizoram',
+        'arunachal': 'arunachal-pradesh', 'arunachal pradesh': 'arunachal-pradesh',
+        'jammu': 'jammu-and-kashmir', 'kashmir': 'jammu-and-kashmir',
+        'ladakh': 'ladakh',
+        'puducherry': 'puducherry', 'pondicherry': 'puducherry',
+    };
+    for (const [name, key] of Object.entries(stateNames)) {
+        if (t.includes(name)) {
+            const opt = document.querySelector(`#location option[value="${key}"]`);
+            if (opt) {
+                document.getElementById('location').value = key;
+                if (typeof WeatherService !== 'undefined') WeatherService.fetchForState(key);
+                respond(lang === 'te' ? `స్థానం ${opt.textContent} కి సెట్ చేయబడింది.` :
+                        lang === 'hi' ? `स्थान ${opt.textContent} सेट किया गया।` :
+                        `Location set to ${opt.textContent}.`);
+                setTimeout(() => { voiceModal.style.display = 'none'; }, 1500);
+                return;
+            }
+        }
+    }
+
+    // ── Intent: Set season ────────────────────────────────────────────────
+    if (/kharif|monsoon|rainy|ఖరీఫ్|వర్షాకాలం|खरीफ|मानसून/.test(t)) {
+        document.getElementById('season').value = 'kharif';
+        respond(lang === 'te' ? 'సీజన్ ఖరీఫ్ కి సెట్ చేయబడింది.' : lang === 'hi' ? 'मौसम खरीफ सेट किया गया।' : 'Season set to Kharif.');
         return;
     }
-    
-    // Default - not understood
-    voiceTranscript.textContent += '\n\n' + msg.notUnderstood;
+    if (/rabi|winter|శీతాకాలం|రబీ|रबी|सर्दी/.test(t)) {
+        document.getElementById('season').value = 'rabi';
+        respond(lang === 'te' ? 'సీజన్ రబీ కి సెట్ చేయబడింది.' : lang === 'hi' ? 'मौसम रबी सेट किया गया।' : 'Season set to Rabi.');
+        return;
+    }
+    if (/zaid|summer|వేసవి|జాయిద్|जायद|गर्मी/.test(t)) {
+        document.getElementById('season').value = 'zaid';
+        respond(lang === 'te' ? 'సీజన్ జాయిద్ కి సెట్ చేయబడింది.' : lang === 'hi' ? 'मौसम जायद सेट किया गया।' : 'Season set to Zaid.');
+        return;
+    }
+
+    // ── Intent: Set soil type ─────────────────────────────────────────────
+    const soilMap = {
+        'clay|నల్ల నేల|चिकनी मिट्टी': 'clay',
+        'sandy|ఇసుక నేల|रेतीली मिट्टी': 'sandy',
+        'loamy|లోమీ|दोमट मिट्टी': 'loamy',
+        'black|నల్ల|काली मिट्टी': 'black',
+        'red|ఎర్ర నేల|लाल मिट्टी': 'red',
+        'alluvial|沖積|जलोढ़ मिट्टी': 'alluvial',
+    };
+    for (const [pattern, val] of Object.entries(soilMap)) {
+        if (new RegExp(pattern).test(t)) {
+            document.getElementById('soilType').value = val;
+            respond(lang === 'te' ? `నేల రకం ${val} కి సెట్ చేయబడింది.` :
+                    lang === 'hi' ? `मिट्टी का प्रकार ${val} सेट किया गया।` :
+                    `Soil type set to ${val}.`);
+            return;
+        }
+    }
+
+    // ── Intent: What is the weather ───────────────────────────────────────
+    if (/weather|temperature|rain|humidity|వాతావరణం|ఉష్ణోగ్రత|मौसम|तापमान/.test(t)) {
+        const temp = document.getElementById('weatherTemp')?.textContent;
+        const hum  = document.getElementById('weatherHumidity')?.textContent;
+        const loc  = document.getElementById('weatherLocation')?.textContent;
+        if (temp && temp !== '--°C') {
+            respond(lang === 'te' ? `${loc} లో ప్రస్తుత ఉష్ణోగ్రత ${temp}, తేమ ${hum}.` :
+                    lang === 'hi' ? `${loc} में वर्तमान तापमान ${temp}, आर्द्रता ${hum} है।` :
+                    `Current weather in ${loc}: Temperature ${temp}, Humidity ${hum}.`);
+        } else {
+            respond(lang === 'te' ? 'వాతావరణ డేటా అందుబాటులో లేదు. దయచేసి స్థానాన్ని ఎంచుకోండి.' :
+                    lang === 'hi' ? 'मौसम डेटा उपलब्ध नहीं। कृपया स्थान चुनें।' :
+                    'Weather data not available. Please select a location first.');
+        }
+        return;
+    }
+
+    // ── Intent: Logout ────────────────────────────────────────────────────
+    if (/logout|sign out|లాగ్ అవుట్|లాగ్ అవుట్|लॉगआउट/.test(t)) {
+        respond(lang === 'te' ? 'లాగ్ అవుట్ అవుతోంది...' : lang === 'hi' ? 'लॉगआउट हो रहा है...' : 'Logging out...');
+        setTimeout(() => { document.getElementById('logoutBtn')?.click(); voiceModal.style.display = 'none'; }, 1200);
+        return;
+    }
+
+    // ── Intent: Help ──────────────────────────────────────────────────────
+    if (/help|what can you do|commands|సహాయం|ఏమి చేయగలవు|मदद|क्या कर सकते/.test(t)) {
+        const helpMsg = lang === 'te'
+            ? 'మీరు చెప్పవచ్చు: పంట సిఫార్సు చేయండి, బీమా తెరవండి, వ్యాధి గుర్తించండి, స్థానం సెట్ చేయండి, సీజన్ సెట్ చేయండి, నేల రకం సెట్ చేయండి, వాతావరణం చెప్పండి, ప్రొఫైల్ చూపించండి.'
+            : lang === 'hi'
+            ? 'आप कह सकते हैं: फसल सिफारिश करें, बीमा खोलें, रोग पहचानें, स्थान सेट करें, मौसम बताएं, प्रोफाइल दिखाएं।'
+            : 'You can say: recommend crop, open insurance, detect disease, set location to [state], set season to kharif/rabi/zaid, set soil type, what is the weather, show profile, auto detect soil, logout.';
+        respond(helpMsg);
+        return;
+    }
+
+    // ── Fallback: unknown intent ──────────────────────────────────────────
+    const fallback = lang === 'te'
+        ? `"${text}" అర్థం కాలేదు. "సహాయం" అని చెప్పండి అందుబాటులో ఉన్న ఆదేశాల జాబితా కోసం.`
+        : lang === 'hi'
+        ? `"${text}" समझ नहीं आया। उपलब्ध आदेशों के लिए "मदद" कहें।`
+        : `I didn't understand "${text}". Say "help" to see available commands.`;
+    respond(fallback);
+}
+
+// ── Back to Farm Details button ───────────────────────────────────────────
+const backToFarmBtn = document.getElementById('backToFarmBtn');
+if (backToFarmBtn) {
+    backToFarmBtn.addEventListener('click', () => {
+        document.getElementById('pageResults').style.display = 'none';
+        document.getElementById('pageFarm').style.display    = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+// ── Weather: fetch on state selection ───────────────────────────────────
+const locationSelect = document.getElementById('location');
+if (locationSelect) {
+    locationSelect.addEventListener('change', (e) => {
+        const stateKey = e.target.value;
+        if (stateKey && typeof WeatherService !== 'undefined') {
+            WeatherService.fetchForState(stateKey);
+        } else {
+            const w = document.getElementById('weatherWidget');
+            if (w) w.style.display = 'none';
+        }
+    });
+}
+
+// ── 📍 Detect Location Button ─────────────────────────────────────────────
+const autoLocationBtn = document.getElementById('autoLocationBtn');
+if (autoLocationBtn) {
+    autoLocationBtn.addEventListener('click', async () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by this browser.');
+            return;
+        }
+
+        // Show loading state on button
+        const origText = autoLocationBtn.textContent;
+        autoLocationBtn.textContent = '⏳...';
+        autoLocationBtn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const { latitude: lat, longitude: lon } = pos.coords;
+
+                    // Reverse geocode using Nominatim
+                    const params = new URLSearchParams({
+                        lat, lon, format: 'json', zoom: 5,
+                        'accept-language': 'en'
+                    });
+                    const res  = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?${params}`,
+                        { headers: { 'User-Agent': 'CROPXAI/1.0' } }
+                    );
+                    const data = await res.json();
+                    const rawState = data?.address?.state || '';
+
+                    // Normalise to our state key format
+                    const stateKey = rawState.toLowerCase()
+                        .trim()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z-]/g, '');
+
+                    // Alias map for common Nominatim variations
+                    const aliases = {
+                        'jammu-and-kashmir': 'jammu-and-kashmir',
+                        'jammu-kashmir':     'jammu-and-kashmir',
+                        'uttaranchal':       'uttarakhand',
+                        'nct-of-delhi':      'delhi',
+                        'national-capital-territory-of-delhi': 'delhi',
+                        'andaman-and-nicobar-islands': 'andaman-and-nicobar',
+                        'dadra-and-nagar-haveli-and-daman-and-diu': 'dadra-and-nagar-haveli',
+                    };
+                    const resolvedKey = aliases[stateKey] || stateKey;
+
+                    // Try to select in dropdown
+                    const opt = locationSelect.querySelector(`option[value="${resolvedKey}"]`);
+                    if (opt) {
+                        locationSelect.value = resolvedKey;
+                        // Trigger weather fetch
+                        if (typeof WeatherService !== 'undefined') {
+                            WeatherService.fetchForState(resolvedKey);
+                        }
+                    } else {
+                        // State not in dropdown — show detected name anyway
+                        alert(`Detected: ${rawState || 'Unknown location'}. Please select your state manually.`);
+                    }
+
+                } catch (err) {
+                    alert('Could not detect location: ' + err.message);
+                } finally {
+                    autoLocationBtn.textContent = origText;
+                    autoLocationBtn.disabled = false;
+                }
+            },
+            (err) => {
+                autoLocationBtn.textContent = origText;
+                autoLocationBtn.disabled = false;
+                const msgs = {
+                    1: 'Location access denied. Please allow location permission.',
+                    2: 'Location unavailable.',
+                    3: 'Location request timed out.'
+                };
+                alert(msgs[err.code] || 'Could not get location.');
+            },
+            { timeout: 10000, maximumAge: 60000, enableHighAccuracy: false }
+        );
+    });
 }
 
 // Auto-detect Soil Parameters
@@ -461,125 +659,201 @@ autoKBtn.addEventListener('click', () => {
 
 // Info Buttons
 document.getElementById('phInfoBtn').addEventListener('click', () => {
-    const content = `
-        <h3>${translations[currentLanguage].phInfoTitle}</h3>
-        <p>${translations[currentLanguage].phInfoContent}</p>
+    const lang = currentLanguage;
+    const L = {
+        en: {
+            range: 'pH Range', classification: 'Classification', crops: 'Suitable Crops',
+            acidic: 'Strongly Acidic', slightAcidic: 'Slightly Acidic',
+            neutral: 'Neutral', slightAlkaline: 'Slightly Alkaline',
+            cropAcidic: 'Tea, Potato, Blueberry', cropSlightAcidic: 'Rice, Wheat, Maize',
+            cropNeutral: 'Most crops thrive', cropAlkaline: 'Cotton, Sugarcane'
+        },
+        te: {
+            range: 'pH పరిధి', classification: 'వర్గీకరణ', crops: 'అనువైన పంటలు',
+            acidic: 'బలంగా ఆమ్లం', slightAcidic: 'కొద్దిగా ఆమ్లం',
+            neutral: 'తటస్థ', slightAlkaline: 'కొద్దిగా క్షారం',
+            cropAcidic: 'టీ, బంగాళాదుంప, బ్లూబెర్రీ', cropSlightAcidic: 'వరి, గోధుమ, మొక్కజొన్న',
+            cropNeutral: 'చాలా పంటలు పెరుగుతాయి', cropAlkaline: 'పత్తి, చెరకు'
+        },
+        hi: {
+            range: 'pH सीमा', classification: 'वर्गीकरण', crops: 'उपयुक्त फसलें',
+            acidic: 'अत्यधिक अम्लीय', slightAcidic: 'थोड़ा अम्लीय',
+            neutral: 'तटस्थ', slightAlkaline: 'थोड़ा क्षारीय',
+            cropAcidic: 'चाय, आलू, ब्लूबेरी', cropSlightAcidic: 'चावल, गेहूं, मक्का',
+            cropNeutral: 'अधिकांश फसलें', cropAlkaline: 'कपास, गन्ना'
+        }
+    }[lang] || {};
+
+    const t = translations[lang];
+    document.getElementById('infoContent').innerHTML = `
+        <h3>${t.phInfoTitle}</h3>
+        <p>${t.phInfoContent}</p>
         <table class="info-table">
-            <tr>
-                <th>pH Range</th>
-                <th>Classification</th>
-                <th>Suitable Crops</th>
-            </tr>
-            <tr>
-                <td>3.5 - 5.5</td>
-                <td>Strongly Acidic</td>
-                <td>Tea, Potato, Blueberry</td>
-            </tr>
-            <tr>
-                <td>5.5 - 6.5</td>
-                <td>Slightly Acidic</td>
-                <td>Rice, Wheat, Maize</td>
-            </tr>
-            <tr>
-                <td>6.5 - 7.5</td>
-                <td>Neutral</td>
-                <td>Most crops thrive</td>
-            </tr>
-            <tr>
-                <td>7.5 - 8.5</td>
-                <td>Slightly Alkaline</td>
-                <td>Cotton, Sugarcane</td>
-            </tr>
+            <tr><th>${L.range}</th><th>${L.classification}</th><th>${L.crops}</th></tr>
+            <tr><td>3.5 – 5.5</td><td>${L.acidic}</td><td>${L.cropAcidic}</td></tr>
+            <tr><td>5.5 – 6.5</td><td>${L.slightAcidic}</td><td>${L.cropSlightAcidic}</td></tr>
+            <tr><td>6.5 – 7.5</td><td>${L.neutral}</td><td>${L.cropNeutral}</td></tr>
+            <tr><td>7.5 – 8.5</td><td>${L.slightAlkaline}</td><td>${L.cropAlkaline}</td></tr>
         </table>
     `;
-    document.getElementById('infoContent').innerHTML = content;
     infoModal.style.display = 'block';
 });
 
 document.getElementById('npkInfoBtn').addEventListener('click', () => {
-    const content = `
-        <h3>${translations[currentLanguage].npkInfoTitle}</h3>
-        <p>${translations[currentLanguage].npkInfoContent}</p>
+    const lang = currentLanguage;
+    const L = {
+        en: {
+            nutrient: 'Nutrient', function: 'Function', deficiency: 'Deficiency Signs',
+            nFunc: 'Leaf growth, protein synthesis', nDef: 'Yellowing of older leaves',
+            pFunc: 'Root development, flowering',   pDef: 'Purple/dark green leaves',
+            kFunc: 'Disease resistance, water regulation', kDef: 'Brown leaf edges',
+            optimal: 'Optimal Ranges', ranges: 'Low: 0-20% | Medium: 20-40% | High: 40-60% | Very High: 60%+'
+        },
+        te: {
+            nutrient: 'పోషకం', function: 'పని', deficiency: 'లోపం సంకేతాలు',
+            nFunc: 'ఆకు పెరుగుదల, ప్రోటీన్ సంశ్లేషణ', nDef: 'పాత ఆకులు పసుపు రంగుకు మారడం',
+            pFunc: 'వేరు అభివృద్ధి, పుష్పించడం',    pDef: 'ఊదా/ముదురు ఆకుపచ్చ ఆకులు',
+            kFunc: 'వ్యాధి నిరోధకత, నీటి నియంత్రణ', kDef: 'ఆకు అంచులు గోధుమ రంగు',
+            optimal: 'అనుకూల పరిధులు', ranges: 'తక్కువ: 0-20% | మధ్యస్థ: 20-40% | అధిక: 40-60% | చాలా అధిక: 60%+'
+        },
+        hi: {
+            nutrient: 'पोषक तत्व', function: 'कार्य', deficiency: 'कमी के संकेत',
+            nFunc: 'पत्ती वृद्धि, प्रोटीन संश्लेषण', nDef: 'पुरानी पत्तियों का पीला पड़ना',
+            pFunc: 'जड़ विकास, फूल आना',             pDef: 'बैंगनी/गहरी हरी पत्तियां',
+            kFunc: 'रोग प्रतिरोध, जल नियंत्रण',     kDef: 'पत्ती के किनारे भूरे',
+            optimal: 'इष्टतम सीमाएं', ranges: 'कम: 0-20% | मध्यम: 20-40% | उच्च: 40-60% | बहुत उच्च: 60%+'
+        }
+    }[lang] || {};
+
+    const t = translations[lang];
+    document.getElementById('infoContent').innerHTML = `
+        <h3>${t.npkInfoTitle}</h3>
+        <p>${t.npkInfoContent}</p>
         <table class="info-table">
-            <tr>
-                <th>Nutrient</th>
-                <th>Function</th>
-                <th>Deficiency Signs</th>
-            </tr>
-            <tr>
-                <td>Nitrogen (N)</td>
-                <td>Leaf growth, protein synthesis</td>
-                <td>Yellowing of older leaves</td>
-            </tr>
-            <tr>
-                <td>Phosphorus (P)</td>
-                <td>Root development, flowering</td>
-                <td>Purple/dark green leaves</td>
-            </tr>
-            <tr>
-                <td>Potassium (K)</td>
-                <td>Disease resistance, water regulation</td>
-                <td>Brown leaf edges</td>
-            </tr>
+            <tr><th>${L.nutrient}</th><th>${L.function}</th><th>${L.deficiency}</th></tr>
+            <tr><td>Nitrogen (N)</td><td>${L.nFunc}</td><td>${L.nDef}</td></tr>
+            <tr><td>Phosphorus (P)</td><td>${L.pFunc}</td><td>${L.pDef}</td></tr>
+            <tr><td>Potassium (K)</td><td>${L.kFunc}</td><td>${L.kDef}</td></tr>
         </table>
-        <p style="margin-top: 15px;"><strong>Optimal Ranges:</strong></p>
-        <p>Low: 0-20% | Medium: 20-40% | High: 40-60% | Very High: 60%+</p>
+        <p style="margin-top:14px;"><strong>${L.optimal}:</strong></p>
+        <p>${L.ranges}</p>
     `;
-    document.getElementById('infoContent').innerHTML = content;
     infoModal.style.display = 'block';
 });
 
 // Crop Recommendation with Explainable AI
-recommendBtn.addEventListener('click', () => {
-    const location = document.getElementById('location').value;
+// ── ML API endpoint (FastAPI + XGBoost) ──────────────────────────────────
+const ML_API = 'http://localhost:8000';
+
+async function getXGBoostRecommendation(inputs) {
+    const body = {
+        climate:    inputs.climate,
+        season:     inputs.season,
+        soil_type:  inputs.soilType,
+        soil_ph:    inputs.soilPh,
+        nitrogen:   inputs.nitrogen,
+        phosphorus: inputs.phosphorus,
+        potassium:  inputs.potassium,
+        area:       inputs.area
+    };
+    const res = await fetch(`${ML_API}/predict`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`ML API error: ${res.status}`);
+    return res.json();
+}
+
+recommendBtn.addEventListener('click', async () => {
+    const location   = document.getElementById('location').value;
+    const climateVal = document.getElementById('climate')
+                        ? document.getElementById('climate').value
+                        : null;
+    // Climate is auto-set from state selection via weatherService
+    // Fallback: derive from location if hidden input is empty
+    const resolvedClimate = (climateVal && climateVal !== '')
+        ? climateVal
+        : getClimateFromLocation(location);
+
     const inputs = {
-        climate: getClimateFromLocation(location), // Convert location to climate
-        area: parseFloat(document.getElementById('area').value),
-        season: document.getElementById('season').value,
-        soilType: document.getElementById('soilType').value,
-        soilPh: parseFloat(document.getElementById('soilPh').value),
-        nitrogen: parseFloat(document.getElementById('nitrogen').value),
+        climate:    resolvedClimate,
+        area:       parseFloat(document.getElementById('area').value),
+        season:     document.getElementById('season').value,
+        soilType:   document.getElementById('soilType').value,
+        soilPh:     parseFloat(document.getElementById('soilPh').value),
+        nitrogen:   parseFloat(document.getElementById('nitrogen').value),
         phosphorus: parseFloat(document.getElementById('phosphorus').value),
-        potassium: parseFloat(document.getElementById('potassium').value)
+        potassium:  parseFloat(document.getElementById('potassium').value)
     };
 
-    if (!location || !inputs.season || !inputs.soilType || 
-        isNaN(inputs.area) || isNaN(inputs.soilPh) || 
+    if (!location || !inputs.season || !inputs.soilType ||
+        isNaN(inputs.area) || isNaN(inputs.soilPh) ||
         isNaN(inputs.nitrogen) || isNaN(inputs.phosphorus) || isNaN(inputs.potassium)) {
         alert(translations[currentLanguage].inputTitle);
         return;
     }
 
     if (!inputs.climate) {
-        alert('Unable to determine climate for selected location');
+        alert(currentLanguage === 'en' ? 'Please select a state first so climate can be detected.' :
+              currentLanguage === 'te' ? 'దయచేసి ముందు రాష్ట్రాన్ని ఎంచుకోండి.' :
+              'कृपया पहले राज्य चुनें।');
         return;
     }
 
-    // Use Explainable AI to analyze all crops
-    const results = explainableAI.analyzeAllCrops(inputs, cropDatabase);
-    
-    // Get top 3 recommendations
-    const topRecommendations = results.slice(0, 3);
-    
-    if (topRecommendations.length > 0) {
-        // Generate explanations for all top crops
-        const recommendationsWithExplanations = topRecommendations.map(result => ({
-            crop: result.crop,
-            cropKey: result.cropKey,
-            scores: result.scores,
-            confidence: result.confidence,
-            explanation: explainableAI.generateExplanation(
-                inputs, 
-                result.crop, 
-                result.scores, 
-                result.confidence, 
-                currentLanguage
-            )
-        }));
-        
-        displayMultipleRecommendations(recommendationsWithExplanations, inputs, location);
-        resultsSection.style.display = 'block';
-        resultsSection.scrollIntoView({ behavior: 'smooth' });
+    // Show loading state
+    recommendBtn.disabled = true;
+    recommendBtn.textContent = '⏳ Analyzing...';
+
+    try {
+        // ── Try XGBoost FastAPI first ─────────────────────────────────
+        let topRecommendations;
+        let usingML = false;
+
+        try {
+            const mlResult = await getXGBoostRecommendation(inputs);
+            usingML = true;
+
+            topRecommendations = mlResult.top_3.map(r => {
+                const cropKey = r.crop;
+                const crop    = cropDatabase[cropKey];
+                if (!crop) return null;
+                const scores  = explainableAI.calculateFeatureScores(inputs, crop);
+                return {
+                    crop, cropKey, scores,
+                    confidence: r.confidence,
+                    explanation: explainableAI.generateExplanation(inputs, crop, scores, r.confidence, currentLanguage),
+                    source: 'XGBoost'
+                };
+            }).filter(Boolean);
+
+        } catch (mlErr) {
+            // FastAPI not running — fall back to JS engine silently
+            console.warn('ML API unavailable, using built-in engine:', mlErr.message);
+            const results = explainableAI.analyzeAllCrops(inputs, cropDatabase);
+            topRecommendations = results.slice(0, 3).map(r => ({
+                crop: r.crop, cropKey: r.cropKey,
+                scores: r.scores, confidence: r.confidence,
+                explanation: explainableAI.generateExplanation(inputs, r.crop, r.scores, r.confidence, currentLanguage),
+                source: 'builtin'
+            }));
+            usingML = false;
+        }
+
+        if (topRecommendations.length > 0) {
+            displayMultipleRecommendations(topRecommendations, inputs, location, usingML);
+            // Switch to results sub-page
+            document.getElementById('pageFarm').style.display    = 'none';
+            document.getElementById('pageResults').style.display = 'block';
+            resultsSection.style.display = 'block';
+            const placeholder = document.getElementById('resultsPlaceholder');
+            if (placeholder) placeholder.style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+    } finally {
+        recommendBtn.disabled = false;
+        recommendBtn.textContent = translations[currentLanguage].getRecommendation || 'Get Crop Recommendation';
     }
 });
 
@@ -734,52 +1008,222 @@ translatePage(currentLanguage);
 
 
 // Display Multiple Recommendations
-function displayMultipleRecommendations(recommendations, inputs, location) {
+function displayMultipleRecommendations(recommendations, inputs, location, usingML = false) {
     const resultsDiv = document.getElementById('recommendationResults');
-    
-    const locationDetails = getLocationDetails(location, currentLanguage);
+    const lang = currentLanguage;
+    const locationDetails = getLocationDetails(location, lang);
     const locationName = locationDetails ? locationDetails.name : location;
-    const soilAnalysis = getSoilAnalysis(inputs.nitrogen, inputs.phosphorus, inputs.potassium, currentLanguage);
-    
+    const soilAnalysis = getSoilAnalysis(inputs.nitrogen, inputs.phosphorus, inputs.potassium, lang);
+
+    const modelBadge = ``;
+
+    const L = {
+        en: { title:'Top Crop Recommendations', compare:'Crop Comparison', clickHint:'Click a crop card to view full details', location:'Location', climate:'Climate', selectCrop:'Select a crop above to view detailed information', details:'Full Details', irrigation:'Irrigation', fertilizers:'Fertilizers', soilAnalysis:'Soil Analysis', npkReq:'NPK Requirements', aiExplanation:'AI Explanation', confidence:'Confidence', featureImportance:'Feature Importance', phRange:'pH Range', optimal:'Optimal', your:'Your', explanation:'Why This Crop?' },
+        te: { title:'టాప్ పంట సిఫార్సులు', compare:'పంట పోలిక', clickHint:'పూర్తి వివరాల కోసం పంట కార్డ్ క్లిక్ చేయండి', location:'స్థానం', climate:'వాతావరణం', selectCrop:'వివరాల కోసం పైన పంటను ఎంచుకోండి', details:'పూర్తి వివరాలు', irrigation:'నీటిపారుదల', fertilizers:'ఎరువులు', soilAnalysis:'నేల విశ్లేషణ', npkReq:'NPK అవసరాలు', aiExplanation:'AI వివరణ', confidence:'విశ్వాసం', featureImportance:'ఫీచర్ ప్రాముఖ్యత', phRange:'pH పరిధి', optimal:'అనుకూల', your:'మీది', explanation:'ఈ పంట ఎందుకు?' },
+        hi: { title:'शीर्ष फसल सिफारिशें', compare:'फसल तुलना', clickHint:'पूरी जानकारी के लिए फसल कार्ड पर क्लिक करें', location:'स्थान', climate:'जलवायु', selectCrop:'विवरण देखने के लिए ऊपर फसल चुनें', details:'पूरी जानकारी', irrigation:'सिंचाई', fertilizers:'उर्वरक', soilAnalysis:'मिट्टी विश्लेषण', npkReq:'NPK आवश्यकताएं', aiExplanation:'AI स्पष्टीकरण', confidence:'विश्वास', featureImportance:'फीचर महत्व', phRange:'pH सीमा', optimal:'इष्टतम', your:'आपका', explanation:'यह फसल क्यों?' }
+    }[lang] || {};
+
+    // ── Header ────────────────────────────────────────────────────────────
     let html = `
-        <div class="recommendations-header">
-            <h2>${currentLanguage === 'en' ? 'Top Crop Recommendations' : 
-                 currentLanguage === 'te' ? 'టాప్ పంట సిఫార్సులు' : 
-                 'शीर्ष फसल सिफारिशें'}</h2>
-            <button id="readRecommendationsBtn" class="btn-read-aloud" data-translate="readAloud">
-                🔊 ${translations[currentLanguage].readAloud}
+    <div class="rec-wrapper">
+        <div class="rec-header">
+            <div class="rec-header-left">
+                <h2>${L.title} ${modelBadge}</h2>
+                <div class="rec-meta">
+                    <span>📍 ${locationName}</span>
+                    <span>🌤️ ${inputs.climate}</span>
+                    <span>🌱 ${inputs.season}</span>
+                </div>
+            </div>
+            <button id="readRecommendationsBtn" class="btn-read-aloud">
+                🔊 ${translations[lang].readAloud || 'Read Aloud'}
             </button>
-            <div class="location-info">
-                <p><strong>📍 ${translations[currentLanguage].location}:</strong> ${locationName}</p>
-                <p><strong>${currentLanguage === 'en' ? 'Climate' : currentLanguage === 'te' ? 'వాతావరణం' : 'जलवायु'}:</strong> ${inputs.climate}</p>
+        </div>
+
+        <!-- ── Comparison Cards (shown first) ─────────────────────────── -->
+        <div class="rec-compare-section">
+            <h3 class="rec-section-title">📊 ${L.compare}</h3>
+            <p class="rec-click-hint">👆 ${L.clickHint}</p>
+            <div class="rec-cards-grid">`;
+
+    recommendations.forEach((rec, i) => {
+        const isBest = i === 0;
+        const rankIcon = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+        const confColor = rec.confidence >= 80 ? '#48bb78' : rec.confidence >= 60 ? '#ed8936' : '#e53e3e';
+        html += `
+            <div class="rec-card ${isBest ? 'rec-card-best' : ''}" onclick="showCropDetail(${i})" data-index="${i}">
+                <div class="rec-card-rank">${rankIcon}</div>
+                <div class="rec-card-name">${rec.crop.name[lang]}</div>
+                <div class="rec-card-conf">
+                    <div class="rec-conf-ring" style="--conf:${rec.confidence};--color:${confColor};">
+                        <span>${rec.confidence}%</span>
+                    </div>
+                </div>
+                <div class="rec-card-scores">
+                    ${['climate','season','soilType','ph'].map(f => `
+                        <div class="rec-mini-score">
+                            <div class="rec-mini-bar" style="width:${rec.scores[f] || 0}%;background:${confColor}"></div>
+                            <span>${(rec.scores[f]||0).toFixed(0)}%</span>
+                        </div>`).join('')}
+                </div>
+                <div class="rec-card-labels">
+                    <span>${lang==='en'?'Climate':lang==='te'?'వాతావరణం':'जलवायु'}</span>
+                    <span>${lang==='en'?'Season':lang==='te'?'సీజన్':'मौसम'}</span>
+                    <span>${lang==='en'?'Soil':lang==='te'?'నేల':'मिट्टी'}</span>
+                    <span>pH</span>
+                </div>
+                <button class="rec-select-btn ${isBest ? 'rec-select-btn-best' : ''}">
+                    ${lang==='en'?'View Details':lang==='te'?'వివరాలు చూడండి':'विवरण देखें'} →
+                </button>
+            </div>`;
+    });
+
+    html += `</div></div>
+
+        <!-- ── Full Detail Panel (hidden until crop selected) ─────────── -->
+        <div id="cropDetailPanel" class="crop-detail-panel">
+            <div class="crop-detail-placeholder">
+                <span class="detail-placeholder-icon">🌾</span>
+                <p>${L.selectCrop}</p>
             </div>
         </div>
-    `;
-    
-    recommendations.forEach((rec, index) => {
-        const isBest = index === 0;
-        const rankLabel = currentLanguage === 'en' ? 
-            (isBest ? '🏆 BEST RECOMMENDATION' : `#${index + 1} Alternative`) :
-            currentLanguage === 'te' ? 
-            (isBest ? '🏆 ఉత్తమ సిఫార్సు' : `#${index + 1} ప్రత్యామ్నాయం`) :
-            (isBest ? '🏆 सर्वश्रेष्ठ सिफारिश' : `#${index + 1} विकल्प`);
-        
-        html += generateCropCard(rec, inputs, soilAnalysis, rankLabel, isBest);
-    });
-    
-    html += generateComparisonTable(recommendations, currentLanguage);
-    
+    </div>`;
+
     resultsDiv.innerHTML = html;
-    
-    // Add event listener for Read Aloud button
+
+    // Store data for detail rendering
+    resultsDiv._recData = { recommendations, inputs, soilAnalysis, lang, L };
+
+    // Read aloud button
     setTimeout(() => {
         const readBtn = document.getElementById('readRecommendationsBtn');
-        if (readBtn) {
-            readBtn.addEventListener('click', () => {
-                readRecommendationsAloud(recommendations, inputs, location);
-            });
-        }
+        if (readBtn) readBtn.addEventListener('click', () => readRecommendationsAloud(recommendations, inputs, location));
     }, 100);
+
+    // Auto-select best crop
+    setTimeout(() => showCropDetail(0), 300);
+}
+
+// ── Show full detail for selected crop ────────────────────────────────────
+function showCropDetail(index) {
+    const resultsDiv = document.getElementById('recommendationResults');
+    if (!resultsDiv._recData) return;
+    const { recommendations, inputs, soilAnalysis, lang, L } = resultsDiv._recData;
+    const rec = recommendations[index];
+    if (!rec) return;
+
+    // Highlight selected card
+    document.querySelectorAll('.rec-card').forEach((c, i) => {
+        c.classList.toggle('rec-card-active', i === index);
+    });
+
+    const { crop, confidence, explanation, scores } = rec;
+    const confColor = confidence >= 80 ? '#48bb78' : confidence >= 60 ? '#ed8936' : '#e53e3e';
+
+    // Feature scores HTML
+    let featHTML = '';
+    for (const [f, score] of Object.entries(scores)) {
+        const name = translations[lang][f] || f;
+        featHTML += `
+            <div class="feat-item">
+                <span class="feat-label">${name}</span>
+                <div class="feat-bar-wrap">
+                    <div class="feat-bar-fill" style="width:${score}%;background:${confColor}"></div>
+                </div>
+                <span class="feat-val">${score.toFixed(0)}%</span>
+            </div>`;
+    }
+
+    // Irrigation schedule
+    let irrHTML = '';
+    if (crop.irrigationSchedule?.[lang]) {
+        irrHTML = `<div class="detail-block">
+            <h4>📅 ${translations[lang].irrigationSchedule || 'Irrigation Schedule'}</h4>
+            <table class="irr-table">
+                <thead><tr>
+                    <th>${translations[lang].growthStage||'Stage'}</th>
+                    <th>${translations[lang].days||'Days'}</th>
+                    <th>${translations[lang].frequency||'Frequency'}</th>
+                    <th>${translations[lang].waterDepth||'Depth'}</th>
+                </tr></thead><tbody>
+                ${crop.irrigationSchedule[lang].map(s => `
+                    <tr><td><strong>${s.stage}</strong></td><td>${s.days}</td><td>${s.frequency}</td><td>${s.depth}</td></tr>
+                `).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    const panel = document.getElementById('cropDetailPanel');
+    panel.innerHTML = `
+        <div class="crop-detail-card" style="--accent:${confColor}">
+            <div class="crop-detail-hero">
+                <div class="crop-detail-hero-left">
+                    <div class="crop-detail-emoji">🌾</div>
+                    <div>
+                        <h2 class="crop-detail-name">${crop.name[lang]}</h2>
+                        <p class="crop-detail-why">${crop.explanation?.[lang] || ''}</p>
+                    </div>
+                </div>
+                <div class="crop-detail-conf-big" style="color:${confColor}">
+                    <span class="conf-number">${confidence}%</span>
+                    <span class="conf-label">${L.confidence}</span>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-block">
+                    <h4>🤖 ${L.aiExplanation}</h4>
+                    <p>${explanation.summary}</p>
+                    ${explanation.recommendations.length ? `<ul class="detail-recs">${explanation.recommendations.map(r=>`<li>${r}</li>`).join('')}</ul>` : ''}
+                </div>
+
+                <div class="detail-block">
+                    <h4>📊 ${L.featureImportance}</h4>
+                    <div class="feat-scores">${featHTML}</div>
+                </div>
+
+                <div class="detail-block">
+                    <h4>🧪 ${L.soilAnalysis}</h4>
+                    <div class="npk-grid">
+                        <div class="npk-item npk-n"><span>N</span><p>${soilAnalysis.nitrogen}</p></div>
+                        <div class="npk-item npk-p"><span>P</span><p>${soilAnalysis.phosphorus}</p></div>
+                        <div class="npk-item npk-k"><span>K</span><p>${soilAnalysis.potassium}</p></div>
+                    </div>
+                </div>
+
+                <div class="detail-block">
+                    <h4>⚗️ ${L.npkReq}</h4>
+                    ${['n','p','k'].map(n => {
+                        const val = n==='n'?inputs.nitrogen:n==='p'?inputs.phosphorus:inputs.potassium;
+                        const [lo,hi] = crop.npk[n];
+                        const ok = val>=lo && val<=hi;
+                        return `<div class="npk-req-row">
+                            <span>${n.toUpperCase()}: ${lo}-${hi}%</span>
+                            <span class="npk-yours ${ok?'npk-ok':'npk-warn'}">${L.your}: ${val}% ${ok?'✓':'⚠️'}</span>
+                        </div>`;
+                    }).join('')}
+                    <div class="npk-req-row">
+                        <span>${L.phRange}: ${crop.phRange[0]}-${crop.phRange[1]}</span>
+                        <span class="npk-yours ${inputs.soilPh>=crop.phRange[0]&&inputs.soilPh<=crop.phRange[1]?'npk-ok':'npk-warn'}">${L.your}: ${inputs.soilPh} ${inputs.soilPh>=crop.phRange[0]&&inputs.soilPh<=crop.phRange[1]?'✓':'⚠️'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-block">
+                    <h4>💧 ${L.irrigation}</h4>
+                    <p>${crop.irrigation?.[lang] || ''}</p>
+                </div>
+
+                <div class="detail-block">
+                    <h4>🌿 ${L.fertilizers}</h4>
+                    <p>${crop.fertilizers?.[lang] || ''}</p>
+                </div>
+            </div>
+
+            ${irrHTML}
+        </div>`;
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function generateCropCard(rec, inputs, soilAnalysis, rankLabel, isBest) {
@@ -927,476 +1371,366 @@ function generateComparisonTable(recommendations, language) {
 }
 
 
-// Crop Insurance Feature
-const insuranceModal = document.getElementById('insuranceModal');
-const insuranceBtn = document.getElementById('insuranceBtn');
-const insuranceForm = document.getElementById('insuranceForm');
-const insuranceSuccess = document.getElementById('insuranceSuccess');
-const closeInsuranceSuccess = document.getElementById('closeInsuranceSuccess');
-const premiumAmountDisplay = document.getElementById('premiumAmount');
-const scrollToApplyBtn = document.getElementById('scrollToApplyBtn');
+// ── Disease Detection Feature ────────────────────────────────────────────
+const diseaseModal       = document.getElementById('diseaseModal');
+const diseaseDetectionBtn = document.getElementById('diseaseDetectionBtn');
+const diseaseImageInput  = document.getElementById('diseaseImageInput');
+const diseasePreviewImg  = document.getElementById('diseasePreviewImg');
+const diseasePreviewSection = document.getElementById('diseasePreviewSection');
+const diseaseDropZone    = document.getElementById('diseaseDropZone');
+const analyzeImageBtn    = document.getElementById('analyzeImageBtn');
+const analyzeAnotherBtn  = document.getElementById('analyzeAnotherBtn');
+const removeImageBtn     = document.getElementById('removeImageBtn');
 
-// Open insurance modal
-if (insuranceBtn) {
-    insuranceBtn.addEventListener('click', () => {
-        insuranceModal.style.display = 'block';
-        insuranceForm.style.display = 'block';
-        insuranceSuccess.style.display = 'none';
-        
-        // Ensure modal content is scrollable
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.style.overflowY = 'scroll';
-            modalContent.scrollTop = 0;
-        }
-        
-        // Prevent body scroll but allow modal scroll
+// Camera state
+let cameraStream   = null;
+let facingMode     = 'environment'; // rear camera by default
+
+// Open modal
+if (diseaseDetectionBtn) {
+    diseaseDetectionBtn.addEventListener('click', () => {
+        diseaseModal.style.display = 'block';
         document.body.style.overflow = 'hidden';
+        resetDiseaseModal();
     });
 }
 
-// Open insurance modal and scroll to application form directly
-const applyNowHeaderBtn = document.getElementById('applyNowHeaderBtn');
-if (applyNowHeaderBtn) {
-    applyNowHeaderBtn.addEventListener('click', () => {
-        // Open the insurance modal
-        insuranceModal.style.display = 'block';
-        insuranceForm.style.display = 'block';
-        insuranceSuccess.style.display = 'none';
-        
-        // Ensure modal content is scrollable
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.style.overflowY = 'scroll';
-            modalContent.scrollTop = 0;
-        }
-        
-        // Prevent body scroll but allow modal scroll
-        document.body.style.overflow = 'hidden';
-        
-        // Wait for modal to render, then scroll to form
-        setTimeout(() => {
-            if (modalContent && insuranceForm) {
-                // Calculate the position of the form relative to the modal content
-                const formPosition = insuranceForm.offsetTop;
-                
-                // Scroll the modal content to the form
-                modalContent.scrollTo({
-                    top: formPosition - 20,
-                    behavior: 'smooth'
-                });
-                
-                // Focus first input after scroll
-                setTimeout(() => {
-                    const firstInput = insuranceForm.querySelector('input, select');
-                    if (firstInput) {
-                        firstInput.focus();
-                        firstInput.style.border = '2px solid #48bb78';
-                        setTimeout(() => {
-                            firstInput.style.border = '';
-                        }, 2000);
-                    }
-                }, 800);
-            }
-        }, 100);
-    });
-}
-
-// Scroll to application form
-if (scrollToApplyBtn) {
-    scrollToApplyBtn.addEventListener('click', () => {
-        console.log('Apply Now button clicked - scrolling to form');
-        
-        // Add visual feedback
-        scrollToApplyBtn.textContent = currentLanguage === 'en' ? '⏬ Scrolling to form...' :
-                                       currentLanguage === 'te' ? '⏬ ఫారమ్‌కు స్క్రోల్ చేస్తోంది...' :
-                                       '⏬ फॉर्म पर स्क्रॉल कर रहा है...';
-        
-        scrollToApplyBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        
-        setTimeout(() => {
-            // Get the modal content container
-            const modalContent = insuranceModal.querySelector('.modal-content');
-            
-            if (modalContent && insuranceForm) {
-                // Calculate the position of the form relative to the modal content
-                const formPosition = insuranceForm.offsetTop;
-                
-                // Scroll the modal content to the form
-                modalContent.scrollTo({
-                    top: formPosition - 20, // 20px offset for better visibility
-                    behavior: 'smooth'
-                });
-            }
-            
-            // Reset button text after scroll
-            setTimeout(() => {
-                scrollToApplyBtn.textContent = translations[currentLanguage].applyNow;
-                scrollToApplyBtn.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-                
-                // Focus first input
-                const firstInput = insuranceForm.querySelector('input, select');
-                if (firstInput) {
-                    firstInput.focus();
-                    firstInput.style.border = '2px solid #48bb78';
-                    setTimeout(() => {
-                        firstInput.style.border = '';
-                    }, 2000);
-                }
-            }, 800);
-        }, 200);
-    });
-}
-
-// Scroll to top of insurance modal
-const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-if (scrollToTopBtn) {
-    scrollToTopBtn.addEventListener('click', () => {
-        console.log('Back to Top button clicked - scrolling to top');
-        
-        // Add visual feedback
-        scrollToTopBtn.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-        
-        // Get the modal content container
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        
-        if (modalContent) {
-            // Scroll to the top of the modal content
-            modalContent.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-        
-        // Reset button style after scroll
-        setTimeout(() => {
-            scrollToTopBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        }, 800);
-    });
-}
-
-// View Benefits button - same as Back to Top
-const viewBenefitsBtn = document.getElementById('viewBenefitsBtn');
-if (viewBenefitsBtn) {
-    viewBenefitsBtn.addEventListener('click', () => {
-        console.log('View Benefits button clicked - scrolling to top');
-        
-        // Add visual feedback
-        viewBenefitsBtn.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-        
-        // Get the modal content container
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        
-        if (modalContent) {
-            // Scroll to the top of the modal content
-            modalContent.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-        
-        // Reset button style after scroll
-        setTimeout(() => {
-            viewBenefitsBtn.style.background = 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)';
-        }, 800);
-    });
-}
-
-// Close Insurance Modal button
-const closeInsuranceModalBtn = document.getElementById('closeInsuranceModalBtn');
-if (closeInsuranceModalBtn) {
-    closeInsuranceModalBtn.addEventListener('click', () => {
-        console.log('Close Insurance Modal button clicked');
-        insuranceModal.style.display = 'none';
-        insuranceForm.style.display = 'block';
-        insuranceSuccess.style.display = 'none';
-        
-        // Restore body scroll
+// Close modal
+window.addEventListener('click', (e) => {
+    if (e.target === diseaseModal) {
+        diseaseModal.style.display = 'none';
         document.body.style.overflow = 'auto';
-        
-        // Reset form and scroll position
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.scrollTop = 0;
-        }
-    });
-}
-
-// Scroll to Submit Button
-const scrollToSubmitBtn = document.getElementById('scrollToSubmitBtn');
-if (scrollToSubmitBtn) {
-    scrollToSubmitBtn.addEventListener('click', () => {
-        console.log('Scroll to Submit button clicked');
-        
-        // Add visual feedback
-        scrollToSubmitBtn.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-        scrollToSubmitBtn.innerHTML = currentLanguage === 'en' ? '⏬ Scrolling...' :
-                                      currentLanguage === 'te' ? '⏬ స్క్రోల్ చేస్తోంది...' :
-                                      '⏬ स्क्रॉल कर रहा है...';
-        
-        // Get the modal content container and submit button
-        const modalContent = insuranceModal.querySelector('.modal-content');
-        const submitBtn = document.getElementById('submitInsuranceBtn');
-        
-        if (modalContent && submitBtn) {
-            // Calculate the position of the submit button relative to the modal content
-            const submitPosition = submitBtn.offsetTop;
-            
-            // Scroll the modal content to the submit button with some offset
-            modalContent.scrollTo({
-                top: submitPosition - 100, // 100px offset from top for better visibility
-                behavior: 'smooth'
-            });
-            
-            // Highlight the submit button
-            submitBtn.style.animation = 'none';
-            setTimeout(() => {
-                submitBtn.style.animation = 'pulse-submit 1s ease-in-out 3';
-            }, 10);
-        }
-        
-        // Reset button after scroll
-        setTimeout(() => {
-            scrollToSubmitBtn.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
-            scrollToSubmitBtn.innerHTML = '⬇️ <span data-translate="scrollToSubmit">' + 
-                                          translations[currentLanguage].scrollToSubmit + '</span>';
-        }, 1000);
-    });
-}
-
-// Hide scroll down indicator when user scrolls
-const scrollDownIndicator = document.getElementById('scrollDownIndicator');
-if (insuranceModal && scrollDownIndicator) {
-    const modalContent = insuranceModal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.addEventListener('scroll', () => {
-            if (modalContent.scrollTop > 100) {
-                scrollDownIndicator.style.display = 'none';
-            } else {
-                scrollDownIndicator.style.display = 'block';
-            }
-        });
     }
+});
+
+function resetDiseaseModal() {
+    stopCamera();
+    document.getElementById('diseaseUploadSection').style.display = 'block';
+    document.getElementById('diseaseAnalyzing').style.display     = 'none';
+    document.getElementById('diseaseResults').style.display       = 'none';
+    diseasePreviewSection.style.display = 'none';
+    diseaseDropZone.style.display       = 'block';
+    diseasePreviewImg.src = '';
+    if (diseaseImageInput)  diseaseImageInput.value  = '';
+    const sel = document.getElementById('diseaseCropSelect');
+    if (sel) sel.value = '';
 }
 
-// Calculate premium based on sum insured
-const insSumInsured = document.getElementById('insSumInsured');
-const insCrop = document.getElementById('insCrop');
-
-if (insSumInsured && insCrop) {
-    const calculatePremium = () => {
-        const sumInsured = parseFloat(insSumInsured.value) || 0;
-        const crop = insCrop.value;
-        
-        // Premium rates based on crop type (as per PMFBY guidelines)
-        const premiumRates = {
-            'rice': 0.015,      // 1.5% for Kharif crops
-            'maize': 0.015,
-            'cotton': 0.015,
-            'groundnut': 0.015,
-            'soybean': 0.015,
-            'wheat': 0.02,      // 2% for Rabi crops
-            'chickpea': 0.02,
-            'sugarcane': 0.05   // 5% for commercial/horticultural crops
-        };
-        
-        const rate = premiumRates[crop] || 0.02;
-        const premium = Math.round(sumInsured * rate);
-        
-        premiumAmountDisplay.textContent = `₹ ${premium.toLocaleString('en-IN')}`;
-    };
-    
-    insSumInsured.addEventListener('input', calculatePremium);
-    insCrop.addEventListener('change', calculatePremium);
-}
-
-// Auto-format Aadhar number with spaces (XXXX XXXX XXXX)
-const insAadhar = document.getElementById('insAadhar');
-if (insAadhar) {
-    insAadhar.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\s/g, ''); // Remove existing spaces
-        value = value.replace(/\D/g, ''); // Remove non-digits
-        
-        // Limit to 12 digits
-        if (value.length > 12) {
-            value = value.substring(0, 12);
-        }
-        
-        // Add spaces after every 4 digits
-        let formatted = '';
-        for (let i = 0; i < value.length; i++) {
-            if (i > 0 && i % 4 === 0) {
-                formatted += ' ';
-            }
-            formatted += value[i];
-        }
-        
-        e.target.value = formatted;
-        
-        // Visual feedback - green border when valid, red when invalid
-        if (value.length === 12) {
-            e.target.style.borderColor = '#48bb78'; // Green
-            e.target.style.borderWidth = '2px';
-        } else if (value.length > 0) {
-            e.target.style.borderColor = '#f56565'; // Red
-            e.target.style.borderWidth = '2px';
-        } else {
-            e.target.style.borderColor = '#e2e8f0'; // Default
-            e.target.style.borderWidth = '2px';
-        }
-    });
-}
-
-// Handle insurance form submission
-if (insuranceForm) {
-    insuranceForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        // Validate Aadhar number
-        const aadharInput = document.getElementById('insAadhar').value;
-        const aadharClean = aadharInput.replace(/\s/g, ''); // Remove spaces
-        
-        if (aadharClean.length !== 12 || !/^\d{12}$/.test(aadharClean)) {
-            alert(currentLanguage === 'en' ? 'Please enter a valid 12-digit Aadhar number' :
-                  currentLanguage === 'te' ? 'దయచేసి చెల్లుబాటు అయ్యే 12 అంకెల ఆధార్ నంబర్‌ను నమోదు చేయండి' :
-                  'कृपया एक मान्य 12 अंकों का आधार नंबर दर्ज करें');
-            document.getElementById('insAadhar').focus();
-            return;
-        }
-        
-        // Get form data
-        const formData = {
-            // Personal Details
-            name: document.getElementById('insName').value,
-            phone: document.getElementById('insPhone').value,
-            aadhar: aadharClean, // Store clean Aadhar without spaces
-            
-            // Farm Details
-            location: document.getElementById('insLocation').value,
-            area: document.getElementById('insArea').value,
-            crop: document.getElementById('insCrop').value,
-            season: document.getElementById('insSeason').value,
-            sumInsured: document.getElementById('insSumInsured').value,
-            premium: premiumAmountDisplay.textContent,
-            
-            // Identity Proof Details
-            idProofType: document.getElementById('insIdProofType').value,
-            idProofNumber: document.getElementById('insIdProofNumber').value,
-            fatherName: document.getElementById('insFatherName').value,
-            dateOfBirth: document.getElementById('insDateOfBirth').value,
-            
-            // Bank Details
-            bankName: document.getElementById('insBankName').value,
-            branchName: document.getElementById('insBranchName').value,
-            accountNumber: document.getElementById('insAccountNumber').value,
-            ifscCode: document.getElementById('insIfscCode').value,
-            accountHolderName: document.getElementById('insAccountHolderName').value,
-            
-            // Land Ownership Details
-            landOwnershipType: document.getElementById('insLandOwnershipType').value,
-            surveyNumber: document.getElementById('insSurveyNumber').value,
-            village: document.getElementById('insVillage').value,
-            district: document.getElementById('insDistrict').value,
-            landArea: document.getElementById('insLandArea').value,
-            irrigationType: document.getElementById('insIrrigationType').value,
-            landDocumentNumber: document.getElementById('insLandDocumentNumber').value,
-            
-            // Application Metadata
-            applicationDate: new Date().toISOString(),
-            userId: currentUser ? currentUser.username : 'guest'
-        };
-        
-        // Save to localStorage
-        const applications = JSON.parse(localStorage.getItem('cropxai_insurance_applications')) || [];
-        applications.push(formData);
-        localStorage.setItem('cropxai_insurance_applications', JSON.stringify(applications));
-        
-        // Show success message
-        insuranceForm.style.display = 'none';
-        insuranceSuccess.style.display = 'block';
-        
-        // Reset form
-        insuranceForm.reset();
-        premiumAmountDisplay.textContent = '₹ 0';
-        
-        // Voice announcement
-        if (currentLanguage === 'en') {
-            speak('Your crop insurance application has been submitted successfully');
-        } else if (currentLanguage === 'te') {
-            speak('మీ పంట బీమా దరఖాస్తు విజయవంతంగా సమర్పించబడింది');
-        } else if (currentLanguage === 'hi') {
-            speak('आपका फसल बीमा आवेदन सफलतापूर्वक जमा किया गया है');
-        }
-    });
-}
-
-// Close success message
-if (closeInsuranceSuccess) {
-    closeInsuranceSuccess.addEventListener('click', () => {
-        insuranceModal.style.display = 'none';
-        insuranceSuccess.style.display = 'none';
-        insuranceForm.style.display = 'block';
-        
-        // Restore body scroll
-        document.body.style.overflow = 'auto';
-    });
-}
-
-// Voice command for insurance
-function processVoiceCommand(text) {
-    text = text.toLowerCase();
-    
-    const messages = {
-        en: {
-            processing: 'Processing your request...',
-            recommend: 'Getting crop recommendation...',
-            profile: 'Opening your profile...',
-            climate: 'Please select climate from the form',
-            soil: 'Please select soil type from the form',
-            help: 'You can say: recommend crop, show profile, fill climate, fill soil type, auto detect values, apply for insurance',
-            autoFill: 'Auto-filling soil parameters...',
-            insurance: 'Opening crop insurance application...',
-            notUnderstood: 'Sorry, I did not understand. Try saying: recommend crop, show profile, apply for insurance, or help'
-        },
-        te: {
-            processing: 'మీ అభ్యర్థనను ప్రాసెస్ చేస్తోంది...',
-            recommend: 'పంట సిఫార్సును పొందుతోంది...',
-            profile: 'మీ ప్రొఫైల్‌ను తెరుస్తోంది...',
-            climate: 'దయచేసి ఫారమ్ నుండి వాతావరణాన్ని ఎంచుకోండి',
-            soil: 'దయచేసి ఫారమ్ నుండి నేల రకాన్ని ఎంచుకోండి',
-            help: 'మీరు చెప్పవచ్చు: పంట సిఫార్సు చేయండి, ప్రొఫైల్ చూపించండి, వాతావరణం నింపండి, నేల రకం నింపండి, విలువలను ఆటో డిటెక్ట్ చేయండి, బీమా కోసం దరఖాస్తు చేయండి',
-            autoFill: 'నేల పారామితులను ఆటో-ఫిల్ చేస్తోంది...',
-            insurance: 'పంట బీమా దరఖాస్తును తెరుస్తోంది...',
-            notUnderstood: 'క్షమించండి, నాకు అర్థం కాలేదు. ప్రయత్నించండి: పంట సిఫార్సు చేయండి, ప్రొఫైల్ చూపించండి, బీమా కోసం దరఖాస్తు చేయండి, లేదా సహాయం'
-        },
-        hi: {
-            processing: 'आपके अनुरोध को प्रोसेस कर रहा है...',
-            recommend: 'फसल सिफारिश प्राप्त कर रहा है...',
-            profile: 'आपकी प्रोफ़ाइल खोल रहा है...',
-            climate: 'कृपया फॉर्म से जलवायु चुनें',
-            soil: 'कृपया फॉर्म से मिट्टी का प्रकार चुनें',
-            help: 'आप कह सकते हैं: फसल की सिफारिश करें, प्रोफ़ाइल दिखाएं, जलवायु भरें, मिट्टी का प्रकार भरें, मूल्यों का ऑटो पता लगाएं, बीमा के लिए आवेदन करें',
-            autoFill: 'मिट्टी के पैरामीटर ऑटो-भर रहा है...',
-            insurance: 'फसल बीमा आवेदन खोल रहा है...',
-            notUnderstood: 'क्षमा करें, मुझे समझ नहीं आया। कोशिश करें: फसल की सिफारिश करें, प्रोफ़ाइल दिखाएं, बीमा के लिए आवेदन करें, या मदद'
-        }
-    };
-    
-    const msg = messages[currentLanguage];
-    
-    // Insurance commands
-    if (text.includes('insurance') || text.includes('bima') || text.includes('बीमा') || 
-        text.includes('apply') || text.includes('pmfby') || text.includes('fasal')) {
-        voiceTranscript.textContent += '\n\n' + msg.insurance;
-        setTimeout(() => {
-            if (insuranceBtn) insuranceBtn.click();
-            voiceModal.style.display = 'none';
-        }, 1000);
+// Handle file selection
+function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Please select a valid image file (JPG, PNG, WEBP).');
         return;
     }
-    
-    // ... rest of the voice commands remain the same
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Image too large. Please use an image under 10MB.');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        diseasePreviewImg.src = e.target.result;
+        diseasePreviewSection.style.display = 'block';
+        diseaseDropZone.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
 }
+
+if (diseaseImageInput)  diseaseImageInput.addEventListener('change',  (e) => handleImageFile(e.target.files[0]));
+
+//  Camera (getUserMedia) 
+const openCameraBtn   = document.getElementById('openCameraBtn');
+const cameraSection   = document.getElementById('cameraSection');
+const cameraVideo     = document.getElementById('cameraStream');
+const cameraCanvas    = document.getElementById('cameraCanvas');
+const captureBtn      = document.getElementById('captureBtn');
+const switchCameraBtn = document.getElementById('switchCameraBtn');
+const closeCameraBtn  = document.getElementById('closeCameraBtn');
+
+async function startCamera() {
+    stopCamera();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Camera not supported in this browser. Please use Chrome or Firefox.');
+        return;
+    }
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+        });
+        cameraVideo.srcObject = cameraStream;
+        diseaseDropZone.style.display       = 'none';
+        diseasePreviewSection.style.display = 'none';
+        cameraSection.style.display         = 'block';
+    } catch (err) {
+        const msg = err.name === 'NotAllowedError'
+            ? 'Camera access denied. Please allow camera permission in your browser settings.'
+            : err.name === 'NotFoundError'
+            ? 'No camera found on this device.'
+            : 'Camera error: ' + err.message;
+        alert(msg);
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(function(t) { t.stop(); });
+        cameraStream = null;
+    }
+    if (cameraVideo) cameraVideo.srcObject = null;
+    if (cameraSection) cameraSection.style.display = 'none';
+}
+
+if (openCameraBtn) openCameraBtn.addEventListener('click', startCamera);
+
+if (captureBtn) {
+    captureBtn.addEventListener('click', function() {
+        if (!cameraVideo || !cameraStream) return;
+        cameraCanvas.width  = cameraVideo.videoWidth  || 640;
+        cameraCanvas.height = cameraVideo.videoHeight || 480;
+        cameraCanvas.getContext('2d').drawImage(cameraVideo, 0, 0);
+        diseasePreviewImg.src = cameraCanvas.toDataURL('image/jpeg', 0.92);
+        diseasePreviewSection.style.display = 'block';
+        stopCamera();
+        diseaseDropZone.style.display = 'none';
+    });
+}
+
+if (switchCameraBtn) {
+    switchCameraBtn.addEventListener('click', function() {
+        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+        startCamera();
+    });
+}
+
+if (closeCameraBtn) {
+    closeCameraBtn.addEventListener('click', function() {
+        stopCamera();
+        diseaseDropZone.style.display = 'block';
+    });
+}
+
+// Drag & drop
+if (diseaseDropZone) {
+    diseaseDropZone.addEventListener('dragover',  (e) => { e.preventDefault(); diseaseDropZone.classList.add('drag-over'); });
+    diseaseDropZone.addEventListener('dragleave', ()  => diseaseDropZone.classList.remove('drag-over'));
+    diseaseDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        diseaseDropZone.classList.remove('drag-over');
+        handleImageFile(e.dataTransfer.files[0]);
+    });
+}
+
+// Remove image
+if (removeImageBtn) {
+    removeImageBtn.addEventListener('click', () => {
+        diseasePreviewSection.style.display = 'none';
+        diseaseDropZone.style.display = 'block';
+        diseasePreviewImg.src = '';
+        if (diseaseImageInput)  diseaseImageInput.value  = '';
+        if (diseaseCameraInput) diseaseCameraInput.value = '';
+    });
+}
+
+// Analyze button
+if (analyzeImageBtn) {
+    analyzeImageBtn.addEventListener('click', () => {
+        const cropKey = document.getElementById('diseaseCropSelect').value;
+        if (!cropKey) {
+            alert(currentLanguage === 'en' ? 'Please select a crop type first.' :
+                  currentLanguage === 'te' ? 'దయచేసి ముందు పంట రకాన్ని ఎంచుకోండి.' :
+                  'कृपया पहले फसल का प्रकार चुनें।');
+            return;
+        }
+        if (!diseasePreviewImg.src || diseasePreviewImg.src === window.location.href) {
+            alert('Please upload a leaf image first.');
+            return;
+        }
+        runDiseaseAnalysis(cropKey);
+    });
+}
+
+// Analyze another
+if (analyzeAnotherBtn) {
+    analyzeAnotherBtn.addEventListener('click', () => {
+        stopCamera();
+        resetDiseaseModal();
+    });
+}
+
+// ── Core analysis function ────────────────────────────────────────────────
+function runDiseaseAnalysis(cropKey) {
+    document.getElementById('diseaseUploadSection').style.display = 'none';
+    document.getElementById('diseaseAnalyzing').style.display     = 'block';
+    document.getElementById('diseaseResults').style.display       = 'none';
+
+    // Simulate ML analysis (2 seconds) then show result
+    setTimeout(() => {
+        const result = analyzeLeafImage(cropKey, diseasePreviewImg);
+        document.getElementById('diseaseAnalyzing').style.display = 'none';
+        document.getElementById('diseaseResults').style.display   = 'block';
+        renderDiseaseResult(result);
+    }, 2000);
+}
+
+// ── Image analysis: improved color + variance detection ──────────────────
+function analyzeLeafImage(cropKey, imgEl) {
+    const canvas = document.createElement('canvas');
+    const ctx    = canvas.getContext('2d');
+    canvas.width  = 150;
+    canvas.height = 150;
+    ctx.drawImage(imgEl, 0, 0, 150, 150);
+
+    const data = ctx.getImageData(0, 0, 150, 150).data;
+
+    let brown = 0, yellow = 0, orange = 0, white = 0, dark = 0,
+        pureGreen = 0, total = 0;
+    let rSum = 0, gSum = 0, bSum = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        total++;
+        rSum += r; gSum += g; bSum += b;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+
+        // Pure healthy green: green dominant, saturated
+        if (g > r + 20 && g > b + 20 && g > 80 && sat > 0.2) pureGreen++;
+        // Brown / rust (disease spots)
+        else if (r > 100 && g > 50 && g < r - 20 && b < 80 && sat > 0.15) brown++;
+        // Yellow (chlorosis / blight)
+        else if (r > 160 && g > 140 && b < 100 && sat > 0.2) yellow++;
+        // Orange (rust pustules)
+        else if (r > 180 && g > 80 && g < 150 && b < 80) orange++;
+        // White/gray patches (powdery mildew, fungal)
+        else if (r > 180 && g > 180 && b > 180 && sat < 0.15) white++;
+        // Very dark (necrosis)
+        else if (max < 60) dark++;
+    }
+
+    const pG = pureGreen / total;
+    const pB = brown     / total;
+    const pY = yellow    / total;
+    const pO = orange    / total;
+    const pW = white     / total;
+    const pD = dark      / total;
+
+    // Disease signal = everything that is NOT healthy green
+    const diseaseSignal = pB + pY + pO + pW + pD;
+
+    const diseases = (typeof diseaseDatabase !== 'undefined')
+        ? (diseaseDatabase[cropKey] || []) : [];
+
+    let detected, confidence;
+
+    // ── Decision: if disease signal is strong enough, pick a disease ────────
+    if (diseaseSignal > 0.12 && diseases.length > 0) {
+        // Map dominant symptom color → disease index
+        const scores = diseases.map((d, idx) => {
+            let score = 0;
+            const id = d.id || '';
+            // Brown spots → blast, blight, leaf spot, early blight
+            if ((id.includes('blast') || id.includes('spot') || id.includes('blight') || id.includes('rot')))
+                score += pB * 3 + pD * 2;
+            // Yellow → blight, mosaic, curl virus
+            if ((id.includes('blight') || id.includes('curl') || id.includes('mosaic') || id.includes('rust')))
+                score += pY * 3 + pO * 2;
+            // White/gray → powdery mildew, fungal
+            if ((id.includes('mildew') || id.includes('blast') || id.includes('smut')))
+                score += pW * 3;
+            // Orange → rust
+            if (id.includes('rust'))
+                score += pO * 4;
+            // Fallback: all diseases get base score from total disease signal
+            score += diseaseSignal * 0.5;
+            return { idx, score };
+        });
+
+        scores.sort((a, b) => b.score - a.score);
+        detected   = diseases[scores[0].idx];
+        confidence = Math.min(94, Math.round(55 + diseaseSignal * 180));
+
+    } else if (pG > 0.35) {
+        // Mostly green → healthy
+        detected   = (typeof healthyResult !== 'undefined') ? healthyResult : diseases[0];
+        confidence = Math.min(92, Math.round(70 + pG * 40));
+
+    } else if (diseases.length > 0) {
+        // Ambiguous image — still pick most likely disease rather than defaulting to healthy
+        detected   = diseases[0];
+        confidence = Math.min(75, Math.round(50 + diseaseSignal * 100));
+
+    } else {
+        detected   = (typeof healthyResult !== 'undefined') ? healthyResult : null;
+        confidence = 60;
+    }
+
+    return { disease: detected, confidence, cropKey };
+}
+
+// ── Render result card ────────────────────────────────────────────────────
+function renderDiseaseResult({ disease, confidence, cropKey }) {
+    if (!disease) return;
+    const lang = currentLanguage || 'en';
+    const name = disease.name[lang] || disease.name.en;
+    const isHealthy = disease.id === 'healthy';
+
+    const severityText = {
+        none:   { en: 'Healthy', te: 'ఆరోగ్యకరమైన', hi: 'स्वस्थ' },
+        low:    { en: 'Low',     te: 'తక్కువ',       hi: 'कम'    },
+        medium: { en: 'Medium',  te: 'మధ్యస్థ',      hi: 'मध्यम' },
+        high:   { en: 'High',    te: 'అధిక',          hi: 'उच्च'  }
+    };
+    const sevLabel = severityText[disease.severity]?.[lang] || disease.severity;
+
+    const labels = {
+        en: { symptoms: '🔍 Symptoms', causes: '⚠️ Causes', treatment: '💊 Treatment', prevention: '🛡️ Prevention', organic: '🌿 Organic Treatment', confidence: 'Confidence' },
+        te: { symptoms: '🔍 లక్షణాలు', causes: '⚠️ కారణాలు', treatment: '💊 చికిత్స', prevention: '🛡️ నివారణ', organic: '🌿 సేంద్రీయ చికిత్స', confidence: 'నమ్మకం' },
+        hi: { symptoms: '🔍 लक्षण', causes: '⚠️ कारण', treatment: '💊 उपचार', prevention: '🛡️ रोकथाम', organic: '🌿 जैविक उपचार', confidence: 'विश्वास' }
+    };
+    const L = labels[lang] || labels.en;
+
+    document.getElementById('diseaseResultContent').innerHTML = `
+        <div class="disease-result-card">
+            <div class="disease-result-header" style="background:${disease.color};">
+                <h3>${isHealthy ? '✅' : '🦠'} ${name}</h3>
+                <span class="severity-badge">${sevLabel}</span>
+            </div>
+            <div class="disease-result-body">
+                <div class="disease-confidence">
+                    <span>${L.confidence}:</span>
+                    <div class="confidence-bar-small">
+                        <div class="confidence-fill-small" style="width:${confidence}%;background:${disease.color};"></div>
+                    </div>
+                    <strong>${confidence}%</strong>
+                </div>
+
+                <div class="disease-info-section">
+                    <h4>${L.symptoms}</h4>
+                    <p>${disease.symptoms[lang] || disease.symptoms.en}</p>
+                </div>
+                ${!isHealthy ? `
+                <div class="disease-info-section">
+                    <h4>${L.causes}</h4>
+                    <p>${disease.causes[lang] || disease.causes.en}</p>
+                </div>
+                <div class="disease-info-section">
+                    <h4>${L.treatment}</h4>
+                    <p>${disease.treatment[lang] || disease.treatment.en}</p>
+                </div>
+                <div class="disease-info-section">
+                    <h4>${L.organic}</h4>
+                    <p>${disease.organic[lang] || disease.organic.en}</p>
+                </div>` : ''}
+                <div class="disease-info-section">
+                    <h4>${L.prevention}</h4>
+                    <p>${disease.prevention[lang] || disease.prevention.en}</p>
+                </div>
+            </div>
+        </div>`;
+}
+
 
 // Text-to-speech function
 function speak(text) {
